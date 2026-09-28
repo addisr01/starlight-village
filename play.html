@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#150f36">
+<title>Starlight Village</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #3b2e6e; --focus: #ffe27a; --btn: #2a2058; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #3b2e6e; --focus: #ffe27a; --btn: #2a2058; } }
+:root[data-theme="dark"] { --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #3b2e6e; --focus: #ffe27a; --btn: #2a2058; }
+:root[data-theme="light"] { --page: #efe9fb; --ink: #2a1d4a; --soft: #5f4f8c; --plate: #ffffff; --edge: #d4c7f0; --focus: #7b5cff; --btn: #f3eeff; }
+*, *::before, *::after { box-sizing: inherit; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: "Pixelify Sans", ui-rounded, "Trebuchet MS", system-ui, sans-serif; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 8px; }
+.stage { position: relative; width: min(100%, calc((100vh - 200px) * 16 / 9)); width: min(100%, calc((100dvh - 200px) * 16 / 9)); min-width: min(100%, 300px); border-radius: 12px; overflow: hidden; border: 3px solid #2b1d45; box-shadow: 0 5px 0 #2b1d45; background: #150f36; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: manipulation; }
+.hud { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.chip { background: rgba(21, 15, 54, 0.78); color: #f1eaff; border: 2px solid #5d4da8; border-radius: 8px; padding: 3px 10px; font-size: clamp(0.9rem, 2.2vw, 1.2rem); }
+.slots { display: flex; gap: 4px; background: rgba(21, 15, 54, 0.78); border: 2px solid #5d4da8; border-radius: 8px; padding: 3px 8px; }
+.slot { font-size: clamp(0.9rem, 2.4vw, 1.3rem); filter: grayscale(1) brightness(0.55); opacity: 0.7; }
+.slot.awake { filter: none; opacity: 1; }
+.gear { position: absolute; top: 6px; right: 6px; font: inherit; font-size: 1.1rem; min-width: 44px; min-height: 44px; border-radius: 10px; border: 2px solid #5d4da8; background: rgba(21, 15, 54, 0.78); color: #f1eaff; cursor: pointer; }
+.start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(18, 13, 38, 0.35); }
+.start button { font: inherit; font-size: clamp(1.4rem, 4vw, 2.2rem); color: #10233a; background: #ffe27a; border: 4px solid #2b1d45; border-radius: 14px; padding: 14px 34px; box-shadow: 0 5px 0 #2b1d45; cursor: pointer; }
+.talk { width: min(100%, 900px); min-height: 150px; background: var(--plate); border: 3px solid var(--edge); border-radius: 12px; padding: 10px 14px; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: start; }
+.start[hidden], .hud[hidden] { display: none; }
+.talk[hidden] { display: grid; visibility: hidden; }
+.who { grid-column: 1 / -1; color: var(--soft); font-size: 1rem; font-weight: 600; min-height: 1.2em; }
+.line { margin: 0; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.35; cursor: pointer; }
+.talk-btns { display: flex; flex-direction: column; gap: 8px; }
+.talk button, .choice, .panel button { font: inherit; color: var(--ink); background: var(--btn); border: 3px solid var(--edge); border-radius: 10px; min-width: 56px; min-height: 52px; font-size: 1.3rem; cursor: pointer; touch-action: manipulation; }
+.talk button:focus-visible, .choice:focus-visible, .panel button:focus-visible, .gear:focus-visible, .start button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.choices { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
+.choice { padding: 8px 22px; font-size: 1.4rem; }
+.choice:first-child { background: #ffe27a; color: #10233a; border-color: #2b1d45; }
+.settings { position: fixed; inset: 0; background: rgba(10, 6, 24, 0.7); display: grid; place-items: center; padding: 16px; z-index: 5; }
+.settings[hidden] { display: none; }
+.panel { width: min(100%, 560px); max-height: 90%; overflow-y: auto; background: var(--plate); border: 3px solid var(--edge); border-radius: 12px; padding: 16px; }
+.panel h2 { margin: 0 0 6px; font-weight: 600; }
+.panel p { color: var(--soft); margin: 6px 0 10px; }
+.voice-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.voice-list button { text-align: left; font-size: 1rem; padding: 8px 10px; }
+.voice-list button[aria-pressed="true"] { border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus); }
+.panel .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.panel .row button { padding: 8px 16px; font-size: 1.05rem; }
+#reset[data-arm="yes"] { background: #b8475f; color: #fff; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <canvas id="scene" width="256" height="144" aria-label="Starlight Village game"></canvas>
+    <div class="hud" id="hud" hidden><span class="chip" id="compChip"></span><span class="slots" id="slots" role="img"></span></div>
+    <button class="gear" id="gear" type="button" aria-label="Grown-up settings">⚙︎</button>
+    <div class="start" id="start"><button type="button" id="startBtn">▶ Play</button></div>
+  </div>
+  <section class="talk" id="talk" hidden aria-live="polite">
+    <div class="who" id="who"></div>
+    <p class="line" id="line"></p>
+    <div class="talk-btns"><button type="button" id="again" aria-label="Hear it again">🔊</button><button type="button" id="nextBtn" aria-label="Next">▶</button></div>
+    <div class="choices" id="choices"></div>
+  </section>
+</div>
+<div class="settings" id="settings" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <h2 id="setTitle">Grown-up settings</h2>
+    <p>Choose the voice that reads to her. Tap one to hear it.</p>
+    <div class="voice-list" id="voiceList"></div>
+    <div class="row"><button type="button" id="closeSet">Done</button><button type="button" id="reset">Start over</button></div>
+  </div>
+</div>
+<script>
+// Tiny pixel engine: everything is drawn from code into a Uint32 buffer (ABGR, little-endian).
+(function (root) {
+  'use strict';
+  const W = 256, H = 144;
+  const OUT = '#2b1d45';
+
+  function rgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function toHex(c) { return '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join(''); }
+  function mix(a, b, t) { const A = rgb(a), B = rgb(b); return toHex(A.map((v, i) => v + (B[i] - v) * t)); }
+  function pack(h) { const [r, g, b] = rgb(h); return ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0; }
+  function hash(a, b) { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+
+  // ---------- Sprite builder ----------
+  class Sprite {
+    constructor(w, h) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.p = new Int16Array(w * h).fill(-1); this.flags = []; this.cur = -1; }
+    begin(f) { this.flags.push(Object.assign({ shade: true, cast: false }, f || {})); this.cur = this.flags.length - 1; return this; }
+    px(x, y, col) { x = Math.floor(x); y = Math.floor(y); if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const i = y * this.w + x; this.c[i] = col; this.p[i] = this.cur; }
+    ellipse(cx, cy, rx, ry, col) {
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+        const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dx * dx + dy * dy <= 1) this.px(x, y, col);
+      }
+    }
+    rect(x, y, w, h, col) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.px(x + i, y + j, col); }
+    poly(pts, col) {
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++) for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++) {
+        const X = x + 0.5, Y = y + 0.5; let inside = false;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          const [xi, yi] = pts[i], [xj, yj] = pts[j];
+          if ((yi > Y) !== (yj > Y) && X < (xj - xi) * (Y - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        if (inside) this.px(x, y, col);
+      }
+    }
+    star(cx, cy, ro, ri, col) {
+      const pts = []; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? ri : ro; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+      this.poly(pts, col);
+    }
+    finish() {
+      const { w, h, c, p, flags } = this, out = c.slice();
+      const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? null : c[y * w + x];
+      const pid = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? -1 : p[y * w + x];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (!c[i]) continue; const f = flags[p[i]];
+        if (f.shade) {
+          if (!at(x - 1, y - 1) || !at(x, y - 1)) out[i] = mix(c[i], '#ffffff', 0.22);
+          else if (!at(x + 1, y + 1) || !at(x, y + 1)) out[i] = mix(c[i], OUT, 0.22);
+        }
+      }
+      // cast shadow: parts flagged `cast` darken what sits just beneath them
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (!c[i] || !flags[p[i]].cast) continue;
+        for (let d = 1; d <= 2; d++) { const q = pid(x, y + d); if (q >= 0 && q < p[i] && flags[q].shade) { const j = (y + d) * w + x; out[j] = mix(c[j], OUT, d === 1 ? 0.35 : 0.2); } else break; }
+      }
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (c[i]) continue;
+        if (at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1)) out[i] = OUT;
+      }
+      return { w, h, data: out.map(v => v ? pack(v) : 0) };
+    }
+  }
+
+  // ---------- Shared face ----------
+  function face(s, blink, opt) {
+    const E = '#2a1a4a', o = opt || {};
+    s.begin({ shade: false });
+    if (blink) { for (let x = 17; x <= 21; x++) s.px(x, 23, E); for (let x = 27; x <= 31; x++) s.px(x, 23, E); s.px(17, 22, E); s.px(31, 22, E); }
+    else {
+      s.ellipse(19.5, 22.5, 2.6, 3.5, E); s.ellipse(29.5, 22.5, 2.6, 3.5, E);
+      const iris = o.iris || '#6d8cff';
+      s.px(19, 24, iris); s.px(20, 24, iris); s.px(29, 24, iris); s.px(30, 24, iris);
+      s.px(18, 20, '#ffffff'); s.px(18, 21, '#ffffff'); s.px(28, 20, '#ffffff'); s.px(28, 21, '#ffffff'); s.px(20, 22, '#ffffff'); s.px(30, 22, '#ffffff');
+      if (o.lashes) { s.px(16, 20, E); s.px(16, 19, E); s.px(32, 20, E); s.px(32, 19, E); }
+    }
+    const blush = o.blush || '#f49ac6';
+    s.px(14, 26, blush); s.px(15, 26, blush); s.px(33, 26, blush); s.px(34, 26, blush);
+    if (!o.noNose) { s.px(24, 26, o.nose || '#e57aa8'); }
+    s.px(22, 27, E); s.px(23, 28, E); s.px(24, 28, E); s.px(25, 28, E); s.px(26, 27, E);
+  }
+
+  // ---------- Creatures ----------
+  function lumikit(blink) {
+    const s = new Sprite(48, 48), P = '#a07ee0', PL = '#e2d4fb', PK = '#f4a6d0', Y = '#ffe27a';
+    s.begin();
+    [[33, 41, 3.2], [36.5, 38, 3], [39, 34.5, 2.8], [40.5, 30.5, 2.6], [41, 26.5, 2.4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, P));
+    s.begin({ shade: false }); s.star(41, 22.5, 4, 1.8, Y); s.px(41, 22, '#fffbe6');
+    s.begin(); s.ellipse(24, 36.5, 10, 8, P);
+    s.begin(); s.ellipse(24, 39, 5.5, 5.5, PL);
+    s.begin(); s.ellipse(19.5, 44, 3.3, 2.2, P); s.ellipse(28.5, 44, 3.3, 2.2, P);
+    s.begin(); s.poly([[11, 18], [13, 3], [22, 11]], P); s.poly([[26, 11], [35, 3], [37, 18]], P);
+    s.begin({ shade: false }); s.poly([[14, 14], [14.5, 7], [19, 11.5]], PK); s.poly([[29, 11.5], [33.5, 7], [34, 14]], PK);
+    s.begin({ cast: true }); s.ellipse(24, 21, 13.5, 11, P); s.poly([[11, 21], [8, 26], [13, 27]], P); s.poly([[37, 21], [40, 26], [35, 27]], P);
+    s.begin({ shade: false }); s.ellipse(24, 27, 4.5, 2.6, PL);
+    s.begin({ shade: false }); s.star(24, 14, 3.6, 1.6, Y); s.px(24, 14, '#fffbe6');
+    face(s, blink, { iris: '#8f7dff' });
+    return s.finish();
+  }
+
+  function moonfoal(blink) {
+    const s = new Sprite(48, 48), Wt = '#f5eeff', M = '#c49cf0', MP = '#f4a6d0', G = '#ffd36a', Hf = '#8a6fb8', PK = '#f4a6d0';
+    s.begin(); [[33, 41, 3.6], [37, 37.5, 3.4], [39, 33, 3.2], [39.5, 28.5, 3]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, M));
+    s.begin({ shade: false }); s.px(40, 27, MP); s.px(39, 28, MP); s.px(38, 33, MP); s.px(36, 37, MP);
+    s.begin(); s.ellipse(24, 36.5, 10, 8, Wt);
+    s.begin(); s.rect(18, 37, 5, 7, Wt); s.rect(26, 37, 5, 7, Wt);
+    s.begin({ shade: false }); s.rect(18, 43, 5, 2, Hf); s.rect(26, 43, 5, 2, Hf);
+    s.begin(); s.poly([[11, 18], [13, 4], [21, 11]], Wt); s.poly([[27, 11], [35, 4], [37, 18]], Wt);
+    s.begin({ shade: false }); s.poly([[14, 14], [14.5, 8], [18.5, 11.5]], PK); s.poly([[29.5, 11.5], [33.5, 8], [34, 14]], PK);
+    s.begin(); s.ellipse(12.5, 16, 4, 4.5, M); s.ellipse(10.5, 22, 3.6, 4.5, M); s.ellipse(11, 28, 3, 3.5, M); s.ellipse(36, 17, 3, 3.5, M);
+    s.begin({ cast: true }); s.ellipse(24, 21, 12.5, 10.5, Wt);
+    s.begin(); s.ellipse(24, 27.5, 6, 3.6, '#ffe4f1');
+    s.begin(); s.ellipse(17.5, 12.5, 5.5, 3, M); s.ellipse(14, 15, 2.6, 3.2, M); s.ellipse(29.5, 12, 3.5, 2.3, M);
+    s.begin({ shade: false }); s.px(16, 11, MP); s.px(17, 11, MP); s.px(18, 12, MP); s.px(13, 14, MP); s.px(30, 11, MP);
+    s.begin(); s.poly([[20.5, 12.5], [24, 0], [27.5, 12.5]], G);
+    s.begin({ shade: false }); const Gd = '#e0a33a'; [[21, 10], [22, 10], [23, 9], [22, 7], [23, 7], [24, 6], [23, 4], [24, 3]].forEach(([x, y]) => s.px(x, y, Gd));
+    face(s, blink, { lashes: true, noNose: true, iris: '#b08cff' });
+    s.begin({ shade: false }); s.px(22, 26, '#c783a8'); s.px(26, 26, '#c783a8');
+    return s.finish();
+  }
+
+  function frostwhisk(blink) {
+    const s = new Sprite(48, 48), B = '#86c3f2', BL = '#eaf7ff', IN = '#c6e6ff', Wh = '#ffffff';
+    s.begin(); [[33, 41, 3.5], [36.5, 37.5, 3.5], [38.5, 33, 3.4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, B));
+    s.begin(); s.ellipse(39, 28, 3.8, 3.8, BL);
+    s.begin(); s.ellipse(24, 36.5, 10.5, 8, B);
+    s.begin(); s.ellipse(24, 39, 6, 5.5, BL); s.poly([[18, 33], [21, 31], [24, 34], [27, 31], [30, 33], [30, 37], [18, 37]], BL);
+    s.begin(); s.ellipse(19.5, 44, 3.3, 2.2, B); s.ellipse(28.5, 44, 3.3, 2.2, B);
+    s.begin({ shade: false }); s.rect(18, 44, 3, 1, BL); s.rect(27, 44, 3, 1, BL);
+    s.begin(); s.poly([[11, 17], [12, 4], [21, 10]], B); s.poly([[27, 10], [36, 4], [37, 17]], B);
+    s.begin({ shade: false }); s.poly([[13.5, 13.5], [13.5, 7.5], [18, 10.5]], IN); s.poly([[30, 10.5], [34.5, 7.5], [34.5, 13.5]], IN);
+    s.begin({ cast: true }); s.ellipse(24, 21, 13.5, 11, B);
+    s.poly([[11, 20], [6, 23], [10, 24], [7, 27], [13, 27]], BL); s.poly([[37, 20], [42, 23], [38, 24], [41, 27], [35, 27]], BL);
+    s.begin({ shade: false }); s.ellipse(24, 27, 4.5, 2.6, BL);
+    s.begin({ shade: false });
+    const flake = (x, y) => { s.px(x, y, Wh); s.px(x - 1, y, Wh); s.px(x + 1, y, Wh); s.px(x, y - 1, Wh); s.px(x, y + 1, Wh); };
+    flake(24, 14); s.px(24, 12, Wh); s.px(24, 16, Wh); s.px(22, 14, Wh); s.px(26, 14, Wh); s.px(23, 13, IN); s.px(25, 13, IN); s.px(23, 15, IN); s.px(25, 15, IN);
+    flake(31, 37); s.px(17, 35, Wh); s.px(15, 38, Wh);
+    face(s, blink, { iris: '#4fb0ff', nose: '#e88ab4' });
+    return s.finish();
+  }
+
+  const CREATURES = [
+    { id: 'lumikit', name: 'Lumikit', make: lumikit, cx: 58, fx: 41, fy: 22, spark: '#ffe27a' },
+    { id: 'moonfoal', name: 'Moonfoal', make: moonfoal, cx: 128, fx: 24, fy: 1, spark: '#fff2b0' },
+    { id: 'frostwhisk', name: 'Frostwhisk', make: frostwhisk, cx: 198, fx: 24, fy: 29, spark: '#dff4ff' },
+  ];
+  CREATURES.forEach(c => { c.open = c.make(false); c.shut = c.make(true); });
+
+  // ---------- Background (static) ----------
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const SKY = ['#150f36', '#1d1545', '#261b57', '#312269', '#3d2a78', '#4f3386', '#663f92', '#80509c', '#9d62a6', '#b875ac'];
+  function buildBackground() {
+    const b = new Uint32Array(W * H);
+    const set = (x, y, h) => { if (x >= 0 && y >= 0 && x < W && y < H) b[y * W + x] = pack(h); };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = Math.min(1, y / 96) * (SKY.length - 1), th = BAYER[(y & 3) * 4 + (x & 3)] / 16;
+      set(x, y, SKY[Math.min(SKY.length - 1, Math.floor(t + th * 0.9))]);
+    }
+    // moon + halo
+    for (let y = 4; y < 50; y++) for (let x = 180; x < 240; x++) {
+      const d = Math.hypot(x + 0.5 - 212, y + 0.5 - 24);
+      if (d < 20 && d > 10.5 && BAYER[(y & 3) * 4 + (x & 3)] / 16 < (20 - d) / 20) set(x, y, mix(SKY[Math.floor(y / 96 * 9)], '#fff4d6', 0.18));
+      if (d <= 10.5 && Math.hypot(x + 0.5 - 217, y + 0.5 - 20) > 9.5) set(x, y, d > 9.5 ? '#f3dfb0' : '#fff4d6');
+    }
+    // distant hills
+    for (let x = 0; x < W; x++) { const hy = Math.round(84 + Math.sin(x / 23) * 4 + Math.sin(x / 9 + 1) * 2); for (let y = hy; y < 100; y++) set(x, y, '#2e2462'); }
+    // pine forest line
+    for (let k = 0; k < 34; k++) {
+      const tx = Math.floor(k * 7.8 + hash(k, 3) * 5), th = 12 + Math.floor(hash(k, 7) * 10), base = 100, col = k % 3 ? '#211a4e' : '#1a1442';
+      for (let j = 0; j < th; j++) { const half = Math.floor(j * 0.45) + (j % 4 === 3 ? 1 : 0); for (let i = -half; i <= half; i++) set(tx + i, base - th + j, col); }
+    }
+    // ground
+    for (let y = 100; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = (y - 100) / 44 * 3, th = BAYER[(y & 3) * 4 + (x & 3)] / 16;
+      set(x, y, ['#2f4868', '#29405e', '#233754', '#1d2e48'][Math.min(3, Math.floor(t + th))]);
+    }
+    for (let k = 0; k < 90; k++) { const x = Math.floor(hash(k, 11) * W), y = 101 + Math.floor(hash(k, 12) * 42); set(x, y, '#44668a'); set(x, y - 1, '#3a5a7c'); if (k % 3 === 0) set(x + 1, y - 2, '#44668a'); }
+    // tiny flowers
+    for (let k = 0; k < 16; k++) { const x = Math.floor(hash(k, 21) * W), y = 106 + Math.floor(hash(k, 22) * 36); set(x, y, k % 2 ? '#e9b7ff' : '#b9e2ff'); set(x, y + 1, '#2f5a4a'); }
+    // lantern posts
+    [[18, 72], [238, 72]].forEach(([lx, ly]) => {
+      for (let y = ly + 8; y < 118; y++) { set(lx, y, '#140f2c'); set(lx + 1, y, '#241c46'); }
+      for (let x = lx - 3; x <= lx + 4; x++) set(x, ly + 7, '#140f2c');
+      for (let y = ly; y < ly + 7; y++) for (let x = lx - 2; x <= lx + 3; x++) set(x, y, (x === lx - 2 || x === lx + 3 || y === ly) ? '#3a2a18' : '#ffd66e');
+      set(lx, ly + 3, '#fff6d0'); set(lx + 1, ly + 3, '#fff6d0');
+    });
+    [[19, 75], [239, 75]].forEach(([gx, gy]) => { for (let y = gy - 10; y < gy + 12; y++) for (let x = gx - 11; x < gx + 12; x++) { const d = Math.hypot(x - gx, y - gy); if (d > 5 && d < 11 && BAYER[(y & 3) * 4 + (x & 3)] / 16 < (11 - d) / 14) { const i = y * W + x, v = b[i]; set(x, y, mix(toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), '#ffd66e', 0.25)); } } });
+    // moonstone pads
+    CREATURES.forEach(c => {
+      for (let y = 116; y < 130; y++) for (let x = c.cx - 26; x <= c.cx + 26; x++) {
+        const dx = (x + 0.5 - c.cx) / 24, dy = (y + 0.5 - 123) / 5.5, d = dx * dx + dy * dy;
+        if (d <= 1) set(x, y, d > 0.72 && y < 123 ? '#8a78d6' : y < 122 ? '#5d4da8' : '#4a3c8e');
+        else if (dx * dx + ((y - 1 + 0.5 - 123) / 5.5) ** 2 <= 1) set(x, y, '#241c46');
+      }
+    });
+    return b;
+  }
+  const BG = buildBackground();
+
+  // ---------- Dynamic scene ----------
+  const STARS = Array.from({ length: 70 }, (_, k) => ({ x: Math.floor(hash(k, 1) * W), y: Math.floor(hash(k, 2) * 70), p: hash(k, 5) * 200, big: hash(k, 6) > 0.85 }));
+  const FLIES = Array.from({ length: 9 }, (_, k) => ({ x: hash(k, 31) * W, y: 92 + hash(k, 32) * 40, p: hash(k, 33) * 628 }));
+
+  function blit(buf, spr, ox, oy, glow) {
+    for (let y = 0; y < spr.h; y++) for (let x = 0; x < spr.w; x++) {
+      const v = spr.data[y * spr.w + x]; if (!v) continue;
+      const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v;
+    }
+  }
+
+  function render(buf, t, state) {
+    buf.set(BG);
+    const put = (x, y, h) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); };
+    STARS.forEach(s => {
+      const tw = (Math.sin((t + s.p) / 22) + 1) / 2; if (tw < 0.25) return;
+      put(s.x, s.y, tw > 0.8 ? '#ffffff' : '#c9bcff');
+      if (s.big && tw > 0.7) { put(s.x - 1, s.y, '#8f80d8'); put(s.x + 1, s.y, '#8f80d8'); put(s.x, s.y - 1, '#8f80d8'); put(s.x, s.y + 1, '#8f80d8'); }
+    });
+    CREATURES.forEach((c, i) => {
+      const sel = state.selected === i, since = t - (state.selAt || 0);
+      let bob = Math.round((Math.sin((t + i * 40) / 18) + 1) / 2);
+      if (sel && since < 24) bob -= Math.round(Math.sin(since / 24 * Math.PI) * 9);
+      else if (sel && since >= 24 && since < 40) bob -= Math.round(Math.sin((since - 24) / 16 * Math.PI) * 3);
+      const blink = ((t + i * 57) % 170) < 6;
+      const ox = c.cx - 24, oy = 76 + bob;
+      c.box = [ox, 72, 48, 56];
+      blit(buf, blink ? c.shut : c.open, ox, oy);
+      // signature sparkle
+      const ph = (t + i * 33) % 90;
+      if (ph < 18) { const r = ph < 9 ? 1 : 2, x = ox + c.fx, y = oy + c.fy, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
+      if (sel) { // little heart floating above
+        const hy = 66 + Math.round(Math.sin(t / 10) * 1.5), hx = c.cx - 3;
+        const HEART = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+        HEART.forEach((row, yy) => [...row].forEach((ch, xx) => { if (ch === 'X') put(hx + xx, hy + yy, (yy === 1 && xx === 1) ? '#ffd1e6' : '#ff7fb6'); }));
+      }
+    });
+    // particles
+    state.parts = (state.parts || []).filter(p => p.life > 0);
+    state.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--; if (p.life % 4 < 3) put(p.x, p.y, p.col); });
+    FLIES.forEach(f => {
+      const x = f.x + Math.sin((t + f.p) / 40) * 10, y = f.y + Math.sin((t + f.p) / 27) * 4, on = Math.sin((t + f.p) / 13) > 0;
+      if (on) { put(x, y, '#fff3a0'); put(x + 1, y, '#c8b85a'); }
+    });
+  }
+
+  function burst(state, i, t) {
+    const c = CREATURES[i], cols = [c.spark, '#ffffff', '#ff9fcf', '#b9a4ff'];
+    for (let k = 0; k < 26; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.4; state.parts.push({ x: c.cx, y: 96, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.8, life: 30 + Math.floor(Math.random() * 20), col: cols[k % 4] }); }
+    state.selected = i; state.selAt = t;
+  }
+
+  const api = { W, H, CREATURES, render, burst, Sprite, pack, mix, hash, rgb, toHex, BAYER, SKY, face, OUT };
+  if (typeof module !== 'undefined') module.exports = api; else root.PX = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+// Starlight Village: world art + renderer. Depends on engine.js (PX).
+(function (root) {
+  'use strict';
+  const PX = root.PX || (typeof require !== 'undefined' ? require('./engine.js') : null);
+  const { W, H, CREATURES, Sprite, pack, mix, hash, BAYER, SKY, OUT } = PX;
+  const WW = 768; // world width in pixels (3 screens)
+  const FEET = 128; // ground line where characters stand
+
+  // ---------- Simple drawing surface ----------
+  class Surf {
+    constructor(w, h) { this.w = w; this.h = h; this.d = new Uint32Array(w * h); this.cache = new Map(); }
+    col(h) { let v = this.cache.get(h); if (v === undefined) { v = pack(h); this.cache.set(h, v); } return v; }
+    set(x, y, h) { x = Math.floor(x); y = Math.floor(y); if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.d[y * this.w + x] = this.col(h); }
+    get(x, y) { return (x >= 0 && y >= 0 && x < this.w && y < this.h) ? this.d[y * this.w + x] : 0; }
+    rect(x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.set(x + i, y + j, c); }
+    ellipse(cx, cy, rx, ry, c) {
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+        const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dx * dx + dy * dy <= 1) this.set(x, y, c);
+      }
+    }
+    poly(pts, c) {
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++) for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++) {
+        const X = x + 0.5, Y = y + 0.5; let ins = false;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > Y) !== (yj > Y) && X < (xj - xi) * (Y - yi) / (yj - yi) + xi) ins = !ins; }
+        if (ins) this.set(x, y, c);
+      }
+    }
+  }
+  const dith = (x, y) => BAYER[(y & 3) * 4 + (x & 3)] / 16;
+
+  // ---------- Spot, the wise old village cat ----------
+  function spotCat(blink) {
+    const s = new Sprite(48, 48), C = '#f3e2c2', CL = '#fff7e8', Br = '#8c5e3c', Sc = '#4fb0a0', E = '#2a1a4a', Gl = '#d9b44a', PK = '#f4a6d0';
+    s.begin(); [[34, 42, 3], [38, 40, 2.8], [41, 37, 2.6], [42.5, 33.5, 2.4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, C));
+    s.begin(); s.ellipse(43, 30.5, 2.5, 2.5, Br);
+    s.begin(); s.ellipse(24, 36.5, 10.5, 8, C);
+    s.begin(); s.ellipse(24, 39, 5.5, 5.5, CL);
+    s.begin(); s.ellipse(19.5, 44, 3.3, 2.2, C); s.ellipse(28.5, 44, 3.3, 2.2, C);
+    s.begin(); s.poly([[11, 18], [13, 4], [22, 11]], Br); s.poly([[26, 11], [35, 4], [37, 18]], C);
+    s.begin({ shade: false }); s.poly([[14, 14], [14.5, 7], [19, 11.5]], PK); s.poly([[29, 11.5], [33.5, 7], [34, 14]], PK);
+    s.begin({ cast: true }); s.ellipse(24, 21, 13.5, 11, C); s.poly([[11, 21], [8, 26], [13, 27]], C); s.poly([[37, 21], [40, 26], [35, 27]], C);
+    s.begin({ shade: false }); s.ellipse(16.5, 15.5, 5.5, 4.5, Br);
+    s.begin({ shade: false }); s.ellipse(24, 27, 4.5, 2.6, CL);
+    s.begin(); s.ellipse(24, 31.5, 10.5, 2.6, Sc); s.poly([[28, 32], [33, 32], [32, 39], [28, 38]], Sc);
+    s.begin({ shade: false });
+    if (blink) { for (let x = 17; x <= 21; x++) s.px(x, 23, E); for (let x = 27; x <= 31; x++) s.px(x, 23, E); }
+    else {
+      for (let x = 17; x <= 21; x++) s.px(x, 22, E); for (let x = 27; x <= 31; x++) s.px(x, 22, E);
+      s.rect(18, 23, 3, 2, E); s.rect(28, 23, 3, 2, E); s.px(18, 23, '#ffffff'); s.px(28, 23, '#ffffff');
+    }
+    for (let y = 16; y <= 30; y++) for (let x = 12; x <= 36; x++) {
+      const a = Math.hypot(x + 0.5 - 19.5, y + 0.5 - 23), b = Math.hypot(x + 0.5 - 29.5, y + 0.5 - 23);
+      if ((a > 3.7 && a < 4.7) || (b > 3.7 && b < 4.7)) s.px(x, y, Gl);
+    }
+    s.px(24, 22, Gl); s.px(25, 22, Gl);
+    s.px(24, 26, '#e57aa8'); [[22, 27], [23, 28], [24, 28], [25, 28], [26, 27]].forEach(([x, y]) => s.px(x, y, E));
+    s.px(14, 26, PK); s.px(34, 26, PK);
+    return s.finish();
+  }
+  function flip(sp) { const out = new Array(sp.w * sp.h); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) out[y * sp.w + x] = sp.data[y * sp.w + (sp.w - 1 - x)]; return { w: sp.w, h: sp.h, data: out }; }
+  const SPOT = { open: spotCat(false), shut: spotCat(true) };
+  CREATURES.forEach(c => { c.openF = flip(c.open); c.shutF = flip(c.shut); });
+
+  // ---------- Sky (screen-fixed) ----------
+  const sky = new Surf(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const t = Math.min(1, y / 96) * (SKY.length - 1); sky.set(x, y, SKY[Math.min(SKY.length - 1, Math.floor(t + dith(x, y) * 0.9))]); }
+  for (let y = 4; y < 50; y++) for (let x = 180; x < 240; x++) {
+    const d = Math.hypot(x + 0.5 - 212, y + 0.5 - 24);
+    if (d < 20 && d > 10.5 && dith(x, y) < (20 - d) / 20) sky.set(x, y, mix(SKY[Math.floor(y / 96 * 9)], '#fff4d6', 0.18));
+    if (d <= 10.5 && Math.hypot(x + 0.5 - 217, y + 0.5 - 20) > 9.5) sky.set(x, y, d > 9.5 ? '#f3dfb0' : '#fff4d6');
+  }
+
+  // ---------- World layer (scrolls) ----------
+  const SNOW_X = 640;
+  const w = new Surf(WW, H);
+  const snowAmt = x => Math.max(0, Math.min(1, (x - SNOW_X) / 50));
+  for (let x = 0; x < WW; x++) { const hy = Math.round(84 + Math.sin(x / 23) * 4 + Math.sin(x / 9 + 1) * 2 - snowAmt(x) * 10); for (let y = hy; y < 100; y++) w.set(x, y, snowAmt(x) > dith(x, y) ? (y < hy + 2 ? '#e8eeff' : '#6f6fae') : '#2e2462'); }
+  for (let k = 0; k < 104; k++) {
+    const tx = Math.floor(k * 7.6 + hash(k, 3) * 5), th = 12 + Math.floor(hash(k, 7) * 10), snowy = snowAmt(tx) > 0.4;
+    const col = snowy ? '#3a3a7a' : (k % 3 ? '#211a4e' : '#1a1442');
+    for (let j = 0; j < th; j++) { const half = Math.floor(j * 0.45) + (j % 4 === 3 ? 1 : 0); for (let i = -half; i <= half; i++) w.set(tx + i, 100 - th + j, snowy && (j % 4 === 0 || j < 2) ? '#e8eeff' : col); }
+  }
+  for (let y = 100; y < H; y++) for (let x = 0; x < WW; x++) {
+    const d = dith(x, y);
+    if (snowAmt(x) > d) w.set(x, y, ['#eef3ff', '#dfe7fb', '#cfd9f4', '#c0cbee'][Math.min(3, Math.floor((y - 100) / 44 * 3 + d))]);
+    else w.set(x, y, ['#2f4868', '#29405e', '#233754', '#1d2e48'][Math.min(3, Math.floor((y - 100) / 44 * 3 + d))]);
+  }
+  // path
+  for (let y = 117; y < 136; y++) for (let x = 0; x < WW; x++) {
+    const edge = y === 117 || y === 135, d = dith(x, y); if (edge && d > 0.5) continue;
+    if (snowAmt(x) > d) w.set(x, y, '#b7c3e8'); else w.set(x, y, (hash(x, y) > 0.93) ? '#6d6798' : '#58527f');
+  }
+  for (let k = 0; k < 260; k++) { const x = Math.floor(hash(k, 11) * WW), y = 101 + Math.floor(hash(k, 12) * 42); if (y > 115 && y < 137) continue; if (snowAmt(x) > 0.3) { w.set(x, y, '#ffffff'); continue; } w.set(x, y, '#44668a'); w.set(x, y - 1, '#3a5a7c'); }
+  for (let k = 0; k < 40; k++) { const x = Math.floor(hash(k, 21) * SNOW_X), y = 102 + Math.floor(hash(k, 22) * 40); if (y > 114 && y < 138) continue; w.set(x, y, k % 2 ? '#e9b7ff' : '#b9e2ff'); w.set(x, y + 1, '#2f5a4a'); }
+
+  function house(x, wd, wall, roof, door) {
+    const top = 74, base = 106, mid = x + wd / 2;
+    w.rect(x + wd - 20, 50, 9, 20, OUT); w.rect(x + wd - 19, 51, 7, 19, mix(roof, OUT, 0.35));
+    w.rect(x - 1, top - 1, wd + 2, base - top + 2, OUT); w.rect(x, top, wd, base - top, wall);
+    for (let y = top; y < base; y += 5) for (let i = 0; i < wd; i++) if (hash(i + x, y) > 0.55) w.set(x + i, y, mix(wall, OUT, 0.12));
+    w.rect(x, base - 2, wd, 2, mix(wall, OUT, 0.3));
+    w.poly([[x - 9, top + 3], [mid, 44], [x + wd + 9, top + 3]], OUT);
+    w.poly([[x - 7, top + 1], [mid, 46.5], [x + wd + 7, top + 1]], roof);
+    for (let r = 52; r < top; r += 5) for (let i = x - 8; i < x + wd + 8; i++) { const hw = (r - 46) / (top - 46) * (wd / 2 + 7); if (Math.abs(i + 0.5 - mid) < hw - 1) w.set(i, r, mix(roof, OUT, 0.25)); }
+    w.rect(mid - 6, 88, 12, 18, OUT); w.rect(mid - 5, 89, 10, 17, door); w.set(mid + 2, 97, '#ffd66e');
+    [[x + 7, 80], [x + wd - 19, 80]].forEach(([wx, wy]) => {
+      w.rect(wx - 1, wy - 1, 14, 12, OUT); w.rect(wx, wy, 12, 10, '#ffd66e'); w.rect(wx + 1, wy + 1, 4, 3, '#fff3c4');
+      w.rect(wx + 5, wy, 2, 10, '#5a3d2a'); w.rect(wx, wy + 4, 12, 2, '#5a3d2a'); w.rect(wx - 2, wy + 10, 16, 2, mix(wall, OUT, 0.4));
+    });
+    for (let y = 60; y < 112; y++) for (let i = x - 16; i < x + wd + 16; i++) { if (w.get(i, y) !== 0 && y > 100) { /* ground glow */ const d = Math.abs(i - mid) / (wd / 2 + 14); if (y > 106 && y < 111 && d < 1 && dith(i, y) < (1 - d) * 0.35) w.set(i, y, '#4f6a7a'); } }
+  }
+  house(40, 72, '#b9a3e8', '#4e6cc0', '#6b4a7a');
+  house(236, 64, '#f0d6a8', '#8b4f86', '#5b3f5f');
+  house(540, 70, '#a9c9ec', '#6a4fa8', '#4c3d7a');
+  // bakery sign
+  w.rect(566, 64, 18, 8, OUT); w.rect(567, 65, 16, 6, '#fff0d8'); w.ellipse(575, 68, 3, 1.8, '#d49a5a');
+
+  // Wishing Tree
+  w.rect(424, 66, 14, 42, OUT); w.rect(425, 66, 12, 42, '#4a3358'); w.rect(427, 70, 3, 36, '#5c4270');
+  w.poly([[418, 108], [424, 98], [424, 108]], '#4a3358'); w.poly([[444, 108], [438, 98], [438, 108]], '#4a3358');
+  [[431, 50, 36, 24, '#2f2566'], [406, 60, 18, 13, '#2f2566'], [456, 60, 18, 13, '#2f2566'], [431, 47, 33, 21, '#3c2f7a'], [409, 58, 15, 10, '#3c2f7a'], [453, 58, 15, 10, '#3c2f7a'], [424, 41, 18, 10, '#4b3c8e'], [441, 44, 14, 8, '#4b3c8e']]
+    .forEach(([x, y, rx, ry, c]) => w.ellipse(x, y, rx, ry, c));
+  [[404, 62], [416, 70], [430, 72], [446, 68], [458, 63], [422, 56], [440, 55]].forEach(([lx, ly], k) => {
+    for (let y = ly - 5; y < ly; y++) w.set(lx, y, '#1a1440'); w.rect(lx - 2, ly, 5, 5, OUT); w.rect(lx - 1, ly + 1, 3, 3, k % 3 === 0 ? '#ffb3da' : k % 3 === 1 ? '#ffd66e' : '#b9e2ff');
+  });
+
+  // lantern posts
+  function lantern(lx) {
+    const ly = 72;
+    for (let y = ly + 8; y < 118; y++) { w.set(lx, y, '#140f2c'); w.set(lx + 1, y, '#241c46'); }
+    for (let x = lx - 3; x <= lx + 4; x++) w.set(x, ly + 7, '#140f2c');
+    for (let y = ly; y < ly + 7; y++) for (let x = lx - 2; x <= lx + 3; x++) w.set(x, y, (x === lx - 2 || x === lx + 3 || y === ly) ? '#3a2a18' : '#ffd66e');
+    w.set(lx, ly + 3, '#fff6d0'); w.set(lx + 1, ly + 3, '#fff6d0');
+  }
+  [140, 362, 500, 620].forEach(lantern);
+
+  // signpost to Frosty Peaks
+  w.rect(684, 96, 3, 22, OUT); w.rect(685, 96, 1, 22, '#6b4a3a');
+  w.rect(672, 86, 28, 13, OUT); w.rect(673, 87, 26, 11, '#8c6448'); w.rect(673, 87, 26, 2, '#eef3ff');
+  const f = (x, y) => w.set(x, y, '#ffffff'); f(686, 92); f(685, 92); f(687, 92); f(686, 91); f(686, 93); f(684, 90); f(688, 90); f(684, 94); f(688, 94);
+  w.poly([[696, 90], [701, 92.5], [696, 95]], '#eef3ff');
+
+  // ---------- Hotspots (world coords) ----------
+  const SPOT_X = 300;
+  const HOTSPOTS = [
+    { id: 'spot', x0: SPOT_X - 22, x1: SPOT_X + 22, y0: 78, y1: 132, stand: SPOT_X - 36 },
+    { id: 'home', x0: 36, x1: 116, y0: 44, y1: 108, stand: 76 },
+    { id: 'tree', x0: 392, x1: 472, y0: 26, y1: 108, stand: 431 },
+    { id: 'bakery', x0: 536, x1: 614, y0: 44, y1: 108, stand: 575 },
+    { id: 'fog', x0: 668, x1: WW, y0: 40, y1: 144, stand: 690 },
+  ];
+  const MIN_X = 28, MAX_X = 700;
+
+  // ---------- Dynamic render ----------
+  const STARS = Array.from({ length: 70 }, (_, k) => ({ x: Math.floor(hash(k, 1) * W), y: Math.floor(hash(k, 2) * 70), p: hash(k, 5) * 200, big: hash(k, 6) > 0.85 }));
+  const FLIES = Array.from({ length: 22 }, (_, k) => ({ x: hash(k, 31) * 640, y: 70 + hash(k, 32) * 60, p: hash(k, 33) * 628 }));
+
+  function renderVillage(buf, t, s) {
+    buf.set(sky.d);
+    const put = (x, y, h) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); };
+    STARS.forEach(st => { const tw = (Math.sin((t + st.p) / 22) + 1) / 2; if (tw < 0.25) return; put(st.x, st.y, tw > 0.8 ? '#ffffff' : '#c9bcff'); if (st.big && tw > 0.7) { put(st.x - 1, st.y, '#8f80d8'); put(st.x + 1, st.y, '#8f80d8'); put(st.x, st.y - 1, '#8f80d8'); put(st.x, st.y + 1, '#8f80d8'); } });
+    const cam = s.cam | 0;
+    for (let y = 0; y < H; y++) { const row = y * WW + cam, o = y * W; for (let x = 0; x < W; x++) { const v = w.d[row + x]; if (v) buf[o + x] = v; } }
+    // fog wall
+    for (let y = 44; y < 140; y++) for (let x = 700; x < WW; x++) {
+      const sx = x - cam; if (sx < 0 || sx >= W) continue;
+      const dens = Math.min(0.92, (x - 700) / 50) * (1 - Math.max(0, (y - 128) / 12)) + Math.sin((y + t * 0.6) / 7 + x / 11) * 0.12;
+      if (dith(x + (t >> 3), y) < dens) buf[y * W + sx] = pack(y % 3 ? '#e6e0ff' : '#d6ccf5');
+    }
+    // characters
+    const draw = (spr, wx, oy) => { const ox = Math.round(wx - cam - 24); for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) { const v = spr.data[y * 48 + x]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; } };
+    const ents = [{ x: SPOT_X, spot: true }, { x: s.comp.x, comp: true }].sort((a, b) => a.x - b.x);
+    ents.forEach(e => {
+      if (e.spot) {
+        const blink = (t % 150) < 7;
+        draw(blink ? SPOT.shut : SPOT.open, SPOT_X, FEET - 46 + ((t % 80) < 40 ? 0 : 1));
+        if (!s.metSpot && !s.talking) { const by = 70 + Math.round(Math.sin(t / 8) * 1.5), bx = SPOT_X - cam + 12; ['XXXXXXX', 'X.....X', 'X.X.X.X', 'X.....X', 'XXXXXXX', '..XX...', '.X.....'].forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === 'X') put(bx + xx, by + yy, '#2b1d45'); else if (ch === '.' && yy > 0 && yy < 4 && xx > 0 && xx < 6) put(bx + xx, by + yy, '#ffffff'); })); }
+      } else {
+        const c = CREATURES[s.comp.i], blink = ((t + 20) % 170) < 6, faceLeft = s.comp.face < 0;
+        const spr = faceLeft ? (blink ? c.shutF : c.openF) : (blink ? c.shut : c.open);
+        const bob = s.comp.walking ? -Math.round(Math.abs(Math.sin(t / 3.2)) * 3) : Math.round((Math.sin(t / 18) + 1) / 2);
+        draw(spr, s.comp.x, FEET - 46 + bob);
+        const ph = t % 90; if (ph < 18) { const fx = faceLeft ? 47 - c.fx : c.fx, x = Math.round(s.comp.x - cam - 24 + fx), y = FEET - 46 + bob + c.fy, r = ph < 9 ? 1 : 2, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
+      }
+    });
+    if (s.comp.walking) { const mx = s.comp.tx - cam, ph = (t >> 2) % 2; put(mx, FEET + 2, '#ffe27a'); if (ph) { put(mx - 2, FEET + 2, '#fff3c4'); put(mx + 2, FEET + 2, '#fff3c4'); put(mx, FEET, '#fff3c4'); put(mx, FEET + 4, '#fff3c4'); } }
+    s.parts = (s.parts || []).filter(p => p.life > 0);
+    s.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--; if (p.life % 4 < 3) put(p.x - cam, p.y, p.col); });
+    FLIES.forEach(fl => { const x = fl.x + Math.sin((t + fl.p) / 40) * 10 - cam, y = fl.y + Math.sin((t + fl.p) / 27) * 4; if (Math.sin((t + fl.p) / 13) > 0) { put(x, y, '#fff3a0'); put(x + 1, y, '#c8b85a'); } });
+  }
+
+  function sparkle(s, wx, wy, cols, n) {
+    for (let k = 0; k < (n || 20); k++) { const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.3; s.parts.push({ x: wx, y: wy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.7, life: 26 + Math.floor(Math.random() * 18), col: cols[k % cols.length] }); }
+  }
+
+  const api = { WW, FEET, SPOT_X, HOTSPOTS, MIN_X, MAX_X, renderVillage, sparkle };
+  if (typeof module !== 'undefined') module.exports = api; else root.VILLAGE = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(function () {
+  'use strict';
+  const { W, H, CREATURES, render: renderChoose, burst } = PX;
+  const V = VILLAGE;
+
+  // Personal details live here as settings, so the game can be set up for any child.
+  const CONFIG = { petName: 'Spot', worldName: 'Starlight Village', powerSlots: 4 };
+  const POWERS = {
+    lumikit: { kind: 'star', icon: '⭐', sniff: 'I can see so many stars from here!' },
+    moonfoal: { kind: 'moon', icon: '🌙', sniff: 'The moon looks so close tonight!' },
+    frostwhisk: { kind: 'snow', icon: '❄️', sniff: 'I can smell snow up there! I love snow!' },
+  };
+
+  // ---------- Save ----------
+  const SAVE_KEY = 'starlight.save.v1';
+  const fresh = () => ({ v: 1, companion: null, metSpot: false, powers: [], visits: 0, started: new Date().toISOString() });
+  let save = fresh();
+  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.v === 1) save = Object.assign(fresh(), s); } catch (e) {}
+  const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const cv = $('scene'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), buf = new Uint32Array(img.data.buffer);
+  const talkEl = $('talk'), whoEl = $('who'), lineEl = $('line'), choicesEl = $('choices'), nextBtn = $('nextBtn'), againBtn = $('again');
+  const hudEl = $('hud'), compChip = $('compChip'), slotsEl = $('slots'), startEl = $('start');
+
+  // ---------- Sound ----------
+  let actx = null;
+  function chime(notes, type) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      notes.forEach((f, k) => {
+        const o = actx.createOscillator(), g = actx.createGain(), s = actx.currentTime + k * 0.09;
+        o.type = type || 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.16, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.35);
+        o.connect(g).connect(actx.destination); o.start(s); o.stop(s + 0.4);
+      });
+    } catch (e) {}
+  }
+  const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  let voices = [], picked = '';
+  try { picked = localStorage.getItem('companionVoice') || ''; } catch (e) {}
+  const rank = v => (/en-AU/i.test(v.lang) ? 0 : /en-(GB|NZ)/i.test(v.lang) ? 1 : 2);
+  function loadVoices() { if (!canSpeak) return false; voices = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name)); return voices.length > 0; }
+  const chosenVoice = () => voices.find(v => v.voiceURI === picked) || voices.find(v => /en-AU/i.test(v.lang)) || voices[0] || null;
+  let tries = 0; (function poll() { if (loadVoices() || ++tries > 24) { drawVoices(); return; } setTimeout(poll, 250); })();
+  if (canSpeak && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); drawVoices(); });
+  function speak(text) {
+    if (!canSpeak || !text) return;
+    try {
+      if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/[⭐🌙❄️✨]/g, '')), v = chosenVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-AU';
+      u.pitch = 1.15; u.rate = 0.9; speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ---------- Dialogue ----------
+  let talking = false, lastLine = '';
+  function talk(who, text) {
+    return new Promise(res => {
+      talking = true; talkEl.hidden = false; whoEl.textContent = who || ''; lineEl.textContent = text; choicesEl.innerHTML = ''; nextBtn.hidden = false;
+      lastLine = text; speak(text); nextBtn.focus({ preventScroll: true });
+      const go = () => { nextBtn.removeEventListener('click', go); lineEl.removeEventListener('click', go); res(); };
+      nextBtn.addEventListener('click', go); lineEl.addEventListener('click', go);
+    });
+  }
+  function ask(who, text, options) {
+    return new Promise(res => {
+      talking = true; talkEl.hidden = false; whoEl.textContent = who || ''; lineEl.textContent = text; nextBtn.hidden = true; lastLine = text; speak(text);
+      choicesEl.innerHTML = '';
+      options.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.textContent = o; b.addEventListener('click', () => res(i)); choicesEl.appendChild(b); });
+    });
+  }
+  function endTalk() { talking = false; talkEl.hidden = true; if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  againBtn.addEventListener('click', () => speak(lastLine));
+
+  // ---------- HUD ----------
+  function drawHud() {
+    if (!save.companion) { hudEl.hidden = true; return; }
+    const c = CREATURES.find(x => x.id === save.companion), p = POWERS[save.companion];
+    hudEl.hidden = false; compChip.textContent = c.name;
+    slotsEl.innerHTML = '';
+    for (let i = 0; i < CONFIG.powerSlots; i++) { const s = document.createElement('span'); s.className = 'slot' + (save.powers[i] ? ' awake' : ''); s.textContent = p.icon; s.title = save.powers[i] ? 'Power: ' + save.powers[i] : 'Sleeping power'; slotsEl.appendChild(s); }
+    slotsEl.setAttribute('aria-label', save.powers.length + ' of ' + CONFIG.powerSlots + ' powers awake');
+  }
+
+  // ---------- Game state ----------
+  const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null };
+  const compInfo = () => CREATURES.find(x => x.id === save.companion);
+
+  async function begin() {
+    startEl.hidden = true; chime([523, 659, 784]);
+    if (save.companion) { enterVillage(true); return; }
+    st.mode = 'choose';
+    await talk('', 'Three baby companions are waiting for a friend. Tap the one you like best!');
+    endTalk();
+  }
+  $('startBtn').addEventListener('click', begin);
+
+  async function pickCompanion(i) {
+    if (talking) return;
+    const c = CREATURES[i]; burst(st.choose, i, st.t); chime([[523, 659, 784, 1046], [587, 740, 880, 1175], [659, 830, 988, 1318]][i]);
+    const intro = ["Hi! I'm Lumikit! My tail sparkles like a comet!", "Hello! I'm Moonfoal! My horn glows under the moon!", "Hi hi! I'm Frostwhisk! I can make tiny frost sparkles!"][i];
+    await talk(c.name, intro);
+    const yes = await ask(c.name, 'Do you want me to be your companion?', ['Yes!', 'Look again']);
+    endTalk();
+    if (yes !== 0) { st.choose.selected = -1; return; }
+    save.companion = c.id; persist(); chime([784, 988, 1175, 1568]);
+    enterVillage(false);
+  }
+
+  function enterVillage(returning) {
+    st.mode = 'village'; const i = CREATURES.findIndex(x => x.id === save.companion);
+    st.comp = { i, x: 76, tx: 76, face: 1, walking: false }; st.cam = 0; st.metSpot = save.metSpot;
+    save.visits++; persist(); drawHud();
+    const c = compInfo();
+    setTimeout(async () => {
+      if (!returning) {
+        await talk(c.name, 'Wow! This is ' + CONFIG.worldName + '. This is our new home!');
+        await talk(c.name, 'Tap on the path to walk. Let\'s find someone to say hello to!');
+      } else {
+        await talk(c.name, save.metSpot ? 'Yay, you\'re back! Let\'s go and say hi to ' + CONFIG.petName + '!' : 'Yay, you\'re back! Let\'s go exploring!');
+      }
+      endTalk();
+    }, 400);
+  }
+
+  // ---------- Scripts at places ----------
+  const SCRIPTS = {
+    async spot() {
+      const c = compInfo(), p = POWERS[c.id], S = CONFIG.petName;
+      st.comp.face = 1;
+      if (!save.metSpot) {
+        await talk(S, 'Well, hello there! I\'m ' + S + '. I\'m the oldest cat in ' + CONFIG.worldName + '.');
+        await talk(S, 'And who is this? A baby ' + c.name + '! How wonderful.');
+        await talk(S, 'Did you know? Every companion has special powers.');
+        await talk(S, c.name + ' has ' + p.kind + ' powers! But they are still asleep.');
+        await talk(S, 'Powers wake up when you learn new words. Every time you read a word, your power grows stronger!');
+        await talk(S, 'Look at the top of the screen. Those are ' + c.name + '\'s powers, waiting to wake up.');
+        await talk(S, 'Come and see me again soon, and we will wake up your very first power.');
+        save.metSpot = true; st.metSpot = true; persist(); chime([659, 784, 988]);
+        V.sparkle(st, V.SPOT_X, 100, ['#ffe27a', '#ffffff', '#ff9fcf']);
+      } else {
+        await talk(S, 'Hello again, little ' + c.name + '! Your first ' + p.kind + ' power is nearly ready to wake up. Very soon!');
+      }
+      endTalk();
+    },
+    async home() { const c = compInfo(); await talk(c.name, 'This is our cosy home! One day we can decorate it however we like.'); endTalk(); },
+    async tree() { const c = compInfo(); await talk(c.name, 'Look at all the little lanterns! This is the Wishing Tree.'); await talk(c.name, 'I wonder what happens when we light more of them?'); endTalk(); },
+    async bakery() { const c = compInfo(); await talk(c.name, 'Mmm, the Moon Bakery! It smells like warm bread. It opens in the morning.'); endTalk(); },
+    async fog() { const c = compInfo(), p = POWERS[c.id]; st.comp.face = 1; await talk(c.name, 'Brrr! It\'s all foggy. This is the path to Frosty Peaks.'); await talk(c.name, p.sniff); await talk(c.name, 'We need more powers to clear the fog. Let\'s come back when we\'re stronger!'); endTalk(); },
+  };
+
+  // ---------- Input ----------
+  cv.addEventListener('pointerdown', e => {
+    const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W, sy = (e.clientY - r.top) / r.height * H;
+    if (st.mode === 'choose') {
+      if (talking) return;
+      CREATURES.forEach((c, i) => { const [bx, by, bw, bh] = c.box || [0, 0, 0, 0]; if (sx >= bx && sx < bx + bw && sy >= by && sy < by + bh) pickCompanion(i); });
+      return;
+    }
+    if (st.mode !== 'village' || talking) return;
+    const wx = sx + st.cam, hit = V.HOTSPOTS.find(h => wx >= h.x0 && wx < h.x1 && sy >= h.y0 && sy < h.y1);
+    const tx = Math.max(V.MIN_X, Math.min(V.MAX_X, hit ? hit.stand : wx));
+    st.comp.tx = tx; st.comp.walking = Math.abs(tx - st.comp.x) > 1; st.arrive = hit ? hit.id : null;
+    if (!st.comp.walking && hit) { const id = st.arrive; st.arrive = null; SCRIPTS[id](); }
+    chime([880], 'sine');
+  });
+
+  // ---------- Loop ----------
+  let last = 0;
+  function update() {
+    if (st.mode !== 'village') return;
+    const c = st.comp, d = c.tx - c.x;
+    if (Math.abs(d) > 1.5) { c.face = Math.sign(d); c.x += Math.sign(d) * 1.8; c.walking = true; }
+    else if (c.walking) { c.x = c.tx; c.walking = false; if (st.arrive) { const id = st.arrive; st.arrive = null; SCRIPTS[id](); } }
+    const want = Math.max(0, Math.min(V.WW - W, c.x - W / 2));
+    st.cam += (want - st.cam) * 0.12; if (Math.abs(want - st.cam) < 0.5) st.cam = want;
+    st.talking = talking;
+  }
+  function frame(now) {
+    if (now - last >= 33) {
+      last = now; st.t++; update();
+      if (st.mode === 'village') V.renderVillage(buf, st.t, st); else renderChoose(buf, st.t, st.choose);
+      ctx.putImageData(img, 0, 0);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- Settings ----------
+  const setEl = $('settings'), listEl = $('voiceList'), resetBtn = $('reset');
+  $('gear').addEventListener('click', () => { setEl.hidden = false; drawVoices(); $('closeSet').focus(); });
+  $('closeSet').addEventListener('click', () => { setEl.hidden = true; resetBtn.dataset.arm = ''; resetBtn.textContent = 'Start over'; });
+  function drawVoices() {
+    if (!listEl) return; listEl.innerHTML = '';
+    if (!canSpeak) { listEl.textContent = "This browser can't read aloud."; return; }
+    if (!voices.length) { listEl.textContent = 'No voices found yet.'; return; }
+    const cur = chosenVoice();
+    voices.forEach(v => {
+      const b = document.createElement('button'), place = (v.lang.split(/[-_]/)[1] || '').toUpperCase();
+      b.type = 'button'; b.textContent = v.name + (place ? ' (' + place + ')' : ''); b.setAttribute('aria-pressed', String(v === cur));
+      b.addEventListener('click', () => { picked = v.voiceURI; try { localStorage.setItem('companionVoice', picked); } catch (e) {} drawVoices(); speak('Hi! This is how I sound.'); });
+      listEl.appendChild(b);
+    });
+  }
+  resetBtn.addEventListener('click', () => {
+    if (resetBtn.dataset.arm !== 'yes') { resetBtn.dataset.arm = 'yes'; resetBtn.textContent = 'Tap again to erase all progress'; return; }
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    location.reload();
+  });
+
+  drawHud();
+})();
+</script>
+</body>
+</html>
