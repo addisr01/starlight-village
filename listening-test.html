@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Listening test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  --page: #efe9fb; --ink: #2a1d4a; --soft: #5f4f8c; --plate: #ffffff; --edge: #d4c7f0; --focus: #7b5cff; --good: #2f9e6e; --near: #c7792a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #362a66; --focus: #ffe27a; --good: #6fe0a8; --near: #ffb46b; } }
+:root[data-theme="dark"] { --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #362a66; --focus: #ffe27a; --good: #6fe0a8; --near: #ffb46b; }
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: "Pixelify Sans", ui-rounded, "Trebuchet MS", system-ui, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 14px 14px 32px; }
+.stage { border-radius: 14px; overflow: hidden; border: 3px solid #2b1d45; box-shadow: 0 6px 0 #2b1d45; background: #150f36; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; }
+.card { text-align: center; margin-top: 18px; }
+.word { font-size: clamp(4rem, 22vw, 7.5rem); line-height: 1; font-weight: 600; letter-spacing: 0.04em; margin: 0; }
+.row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+button { font: inherit; font-size: 1.1rem; color: var(--ink); background: var(--plate); border: 3px solid var(--edge); border-radius: 10px; padding: 10px 16px; min-height: 52px; cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+button:disabled { opacity: 0.5; cursor: default; }
+.mic { font-size: 1.4rem; min-height: 84px; padding: 12px 30px; border-color: #86c3f2; border-width: 4px; }
+.mic[data-on="true"] { background: #86c3f2; color: #10233a; }
+.heard { min-height: 3.2em; margin: 16px 0 0; font-size: 1.3rem; }
+.heard .ok { color: var(--good); font-weight: 600; }
+.heard .no { color: var(--near); font-weight: 600; }
+.status { color: var(--soft); text-align: center; margin: 10px 0 0; }
+h2 { font-size: 1.3rem; font-weight: 600; margin: 28px 0 8px; }
+.tally { color: var(--soft); margin: 0 0 8px; }
+.logwrap { overflow-x: auto; border: 3px solid var(--edge); border-radius: 10px; background: var(--plate); }
+table { border-collapse: collapse; width: 100%; font-size: 1rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--edge); vertical-align: top; }
+th { font-weight: 600; color: var(--soft); }
+tr:last-child td { border-bottom: 0; }
+textarea { width: 100%; min-height: 110px; margin-top: 10px; font: 0.9rem ui-monospace, Menlo, Consolas, monospace; color: var(--ink); background: var(--plate); border: 3px solid var(--edge); border-radius: 10px; padding: 8px; }
+.note { color: var(--soft); font-size: 0.95rem; line-height: 1.45; max-width: 62ch; }
+</style>
+</head>
+<body>
+<main>
+  <div class="stage"><canvas id="scene" width="256" height="144" aria-label="Frostwhisk and friends waiting to hear a word"></canvas></div>
+  <section class="card" aria-live="polite">
+    <p class="word" id="word">cat</p>
+    <div class="row">
+      <button type="button" id="hear">Hear it</button>
+      <button type="button" class="mic" id="mic" data-on="false">🎤 Say the word</button>
+      <button type="button" id="next">Next word</button>
+    </div>
+    <p class="heard" id="heard"></p>
+    <p class="status" id="status" role="status">Checking this browser…</p>
+  </section>
+  <h2>Results so far</h2>
+  <p class="tally" id="tally">No tries yet.</p>
+  <div class="logwrap"><table><thead><tr><th>Word</th><th>Heard</th><th>Match</th></tr></thead><tbody id="log"></tbody></table></div>
+  <textarea id="summary" readonly aria-label="Results to copy"></textarea>
+  <div class="row"><button type="button" id="copy">Copy results</button><button type="button" id="clear">Clear results</button></div>
+  <p class="note">When you tap the microphone, your browser sends the recording to its speech service to turn it into text (Google on Android Chrome, Apple on iPad Safari). Nothing is saved by this page beyond the results table on this device.</p>
+</main>
+<script>
+// Tiny pixel engine: everything is drawn from code into a Uint32 buffer (ABGR, little-endian).
+(function (root) {
+  'use strict';
+  const W = 256, H = 144;
+  const OUT = '#2b1d45';
+
+  function rgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function toHex(c) { return '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join(''); }
+  function mix(a, b, t) { const A = rgb(a), B = rgb(b); return toHex(A.map((v, i) => v + (B[i] - v) * t)); }
+  function pack(h) { const [r, g, b] = rgb(h); return ((255 << 24) | (b << 16) | (g << 8) | r) >>> 0; }
+  function hash(a, b) { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+
+  // ---------- Sprite builder ----------
+  class Sprite {
+    constructor(w, h) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.p = new Int16Array(w * h).fill(-1); this.flags = []; this.cur = -1; }
+    begin(f) { this.flags.push(Object.assign({ shade: true, cast: false }, f || {})); this.cur = this.flags.length - 1; return this; }
+    px(x, y, col) { x = Math.floor(x); y = Math.floor(y); if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const i = y * this.w + x; this.c[i] = col; this.p[i] = this.cur; }
+    ellipse(cx, cy, rx, ry, col) {
+      for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+        const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry; if (dx * dx + dy * dy <= 1) this.px(x, y, col);
+      }
+    }
+    rect(x, y, w, h, col) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.px(x + i, y + j, col); }
+    poly(pts, col) {
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++) for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++) {
+        const X = x + 0.5, Y = y + 0.5; let inside = false;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          const [xi, yi] = pts[i], [xj, yj] = pts[j];
+          if ((yi > Y) !== (yj > Y) && X < (xj - xi) * (Y - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        if (inside) this.px(x, y, col);
+      }
+    }
+    star(cx, cy, ro, ri, col) {
+      const pts = []; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? ri : ro; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+      this.poly(pts, col);
+    }
+    finish() {
+      const { w, h, c, p, flags } = this, out = c.slice();
+      const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? null : c[y * w + x];
+      const pid = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? -1 : p[y * w + x];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (!c[i]) continue; const f = flags[p[i]];
+        if (f.shade) {
+          if (!at(x - 1, y - 1) || !at(x, y - 1)) out[i] = mix(c[i], '#ffffff', 0.22);
+          else if (!at(x + 1, y + 1) || !at(x, y + 1)) out[i] = mix(c[i], OUT, 0.22);
+        }
+      }
+      // cast shadow: parts flagged `cast` darken what sits just beneath them
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (!c[i] || !flags[p[i]].cast) continue;
+        for (let d = 1; d <= 2; d++) { const q = pid(x, y + d); if (q >= 0 && q < p[i] && flags[q].shade) { const j = (y + d) * w + x; out[j] = mix(c[j], OUT, d === 1 ? 0.35 : 0.2); } else break; }
+      }
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (c[i]) continue;
+        if (at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1)) out[i] = OUT;
+      }
+      return { w, h, data: out.map(v => v ? pack(v) : 0) };
+    }
+  }
+
+  // ---------- Shared face ----------
+  function face(s, blink, opt) {
+    const E = '#2a1a4a', o = opt || {};
+    s.begin({ shade: false });
+    if (blink) { for (let x = 17; x <= 21; x++) s.px(x, 23, E); for (let x = 27; x <= 31; x++) s.px(x, 23, E); s.px(17, 22, E); s.px(31, 22, E); }
+    else {
+      s.ellipse(19.5, 22.5, 2.6, 3.5, E); s.ellipse(29.5, 22.5, 2.6, 3.5, E);
+      const iris = o.iris || '#6d8cff';
+      s.px(19, 24, iris); s.px(20, 24, iris); s.px(29, 24, iris); s.px(30, 24, iris);
+      s.px(18, 20, '#ffffff'); s.px(18, 21, '#ffffff'); s.px(28, 20, '#ffffff'); s.px(28, 21, '#ffffff'); s.px(20, 22, '#ffffff'); s.px(30, 22, '#ffffff');
+      if (o.lashes) { s.px(16, 20, E); s.px(16, 19, E); s.px(32, 20, E); s.px(32, 19, E); }
+    }
+    const blush = o.blush || '#f49ac6';
+    s.px(14, 26, blush); s.px(15, 26, blush); s.px(33, 26, blush); s.px(34, 26, blush);
+    if (!o.noNose) { s.px(24, 26, o.nose || '#e57aa8'); }
+    s.px(22, 27, E); s.px(23, 28, E); s.px(24, 28, E); s.px(25, 28, E); s.px(26, 27, E);
+  }
+
+  // ---------- Creatures ----------
+  function lumikit(blink) {
+    const s = new Sprite(48, 48), P = '#a07ee0', PL = '#e2d4fb', PK = '#f4a6d0', Y = '#ffe27a';
+    s.begin();
+    [[33, 41, 3.2], [36.5, 38, 3], [39, 34.5, 2.8], [40.5, 30.5, 2.6], [41, 26.5, 2.4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, P));
+    s.begin({ shade: false }); s.star(41, 22.5, 4, 1.8, Y); s.px(41, 22, '#fffbe6');
+    s.begin(); s.ellipse(24, 36.5, 10, 8, P);
+    s.begin(); s.ellipse(24, 39, 5.5, 5.5, PL);
+    s.begin(); s.ellipse(19.5, 44, 3.3, 2.2, P); s.ellipse(28.5, 44, 3.3, 2.2, P);
+    s.begin(); s.poly([[11, 18], [13, 3], [22, 11]], P); s.poly([[26, 11], [35, 3], [37, 18]], P);
+    s.begin({ shade: false }); s.poly([[14, 14], [14.5, 7], [19, 11.5]], PK); s.poly([[29, 11.5], [33.5, 7], [34, 14]], PK);
+    s.begin({ cast: true }); s.ellipse(24, 21, 13.5, 11, P); s.poly([[11, 21], [8, 26], [13, 27]], P); s.poly([[37, 21], [40, 26], [35, 27]], P);
+    s.begin({ shade: false }); s.ellipse(24, 27, 4.5, 2.6, PL);
+    s.begin({ shade: false }); s.star(24, 14, 3.6, 1.6, Y); s.px(24, 14, '#fffbe6');
+    face(s, blink, { iris: '#8f7dff' });
+    return s.finish();
+  }
+
+  function moonfoal(blink) {
+    const s = new Sprite(48, 48), Wt = '#f5eeff', M = '#c49cf0', MP = '#f4a6d0', G = '#ffd36a', Hf = '#8a6fb8', PK = '#f4a6d0';
+    s.begin(); [[33, 41, 3.6], [37, 37.5, 3.4], [39, 33, 3.2], [39.5, 28.5, 3]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, M));
+    s.begin({ shade: false }); s.px(40, 27, MP); s.px(39, 28, MP); s.px(38, 33, MP); s.px(36, 37, MP);
+    s.begin(); s.ellipse(24, 36.5, 10, 8, Wt);
+    s.begin(); s.rect(18, 37, 5, 7, Wt); s.rect(26, 37, 5, 7, Wt);
+    s.begin({ shade: false }); s.rect(18, 43, 5, 2, Hf); s.rect(26, 43, 5, 2, Hf);
+    s.begin(); s.poly([[11, 18], [13, 4], [21, 11]], Wt); s.poly([[27, 11], [35, 4], [37, 18]], Wt);
+    s.begin({ shade: false }); s.poly([[14, 14], [14.5, 8], [18.5, 11.5]], PK); s.poly([[29.5, 11.5], [33.5, 8], [34, 14]], PK);
+    s.begin(); s.ellipse(12.5, 16, 4, 4.5, M); s.ellipse(10.5, 22, 3.6, 4.5, M); s.ellipse(11, 28, 3, 3.5, M); s.ellipse(36, 17, 3, 3.5, M);
+    s.begin({ cast: true }); s.ellipse(24, 21, 12.5, 10.5, Wt);
+    s.begin(); s.ellipse(24, 27.5, 6, 3.6, '#ffe4f1');
+    s.begin(); s.ellipse(17.5, 12.5, 5.5, 3, M); s.ellipse(14, 15, 2.6, 3.2, M); s.ellipse(29.5, 12, 3.5, 2.3, M);
+    s.begin({ shade: false }); s.px(16, 11, MP); s.px(17, 11, MP); s.px(18, 12, MP); s.px(13, 14, MP); s.px(30, 11, MP);
+    s.begin(); s.poly([[20.5, 12.5], [24, 0], [27.5, 12.5]], G);
+    s.begin({ shade: false }); const Gd = '#e0a33a'; [[21, 10], [22, 10], [23, 9], [22, 7], [23, 7], [24, 6], [23, 4], [24, 3]].forEach(([x, y]) => s.px(x, y, Gd));
+    face(s, blink, { lashes: true, noNose: true, iris: '#b08cff' });
+    s.begin({ shade: false }); s.px(22, 26, '#c783a8'); s.px(26, 26, '#c783a8');
+    return s.finish();
+  }
+
+  function frostwhisk(blink) {
+    const s = new Sprite(48, 48), B = '#86c3f2', BL = '#eaf7ff', IN = '#c6e6ff', Wh = '#ffffff';
+    s.begin(); [[33, 41, 3.5], [36.5, 37.5, 3.5], [38.5, 33, 3.4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, B));
+    s.begin(); s.ellipse(39, 28, 3.8, 3.8, BL);
+    s.begin(); s.ellipse(24, 36.5, 10.5, 8, B);
+    s.begin(); s.ellipse(24, 39, 6, 5.5, BL); s.poly([[18, 33], [21, 31], [24, 34], [27, 31], [30, 33], [30, 37], [18, 37]], BL);
+    s.begin(); s.ellipse(19.5, 44, 3.3, 2.2, B); s.ellipse(28.5, 44, 3.3, 2.2, B);
+    s.begin({ shade: false }); s.rect(18, 44, 3, 1, BL); s.rect(27, 44, 3, 1, BL);
+    s.begin(); s.poly([[11, 17], [12, 4], [21, 10]], B); s.poly([[27, 10], [36, 4], [37, 17]], B);
+    s.begin({ shade: false }); s.poly([[13.5, 13.5], [13.5, 7.5], [18, 10.5]], IN); s.poly([[30, 10.5], [34.5, 7.5], [34.5, 13.5]], IN);
+    s.begin({ cast: true }); s.ellipse(24, 21, 13.5, 11, B);
+    s.poly([[11, 20], [6, 23], [10, 24], [7, 27], [13, 27]], BL); s.poly([[37, 20], [42, 23], [38, 24], [41, 27], [35, 27]], BL);
+    s.begin({ shade: false }); s.ellipse(24, 27, 4.5, 2.6, BL);
+    s.begin({ shade: false });
+    const flake = (x, y) => { s.px(x, y, Wh); s.px(x - 1, y, Wh); s.px(x + 1, y, Wh); s.px(x, y - 1, Wh); s.px(x, y + 1, Wh); };
+    flake(24, 14); s.px(24, 12, Wh); s.px(24, 16, Wh); s.px(22, 14, Wh); s.px(26, 14, Wh); s.px(23, 13, IN); s.px(25, 13, IN); s.px(23, 15, IN); s.px(25, 15, IN);
+    flake(31, 37); s.px(17, 35, Wh); s.px(15, 38, Wh);
+    face(s, blink, { iris: '#4fb0ff', nose: '#e88ab4' });
+    return s.finish();
+  }
+
+  const CREATURES = [
+    { id: 'lumikit', name: 'Lumikit', make: lumikit, cx: 58, fx: 41, fy: 22, spark: '#ffe27a' },
+    { id: 'moonfoal', name: 'Moonfoal', make: moonfoal, cx: 128, fx: 24, fy: 1, spark: '#fff2b0' },
+    { id: 'frostwhisk', name: 'Frostwhisk', make: frostwhisk, cx: 198, fx: 24, fy: 29, spark: '#dff4ff' },
+  ];
+  CREATURES.forEach(c => { c.open = c.make(false); c.shut = c.make(true); });
+
+  // ---------- Background (static) ----------
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const SKY = ['#150f36', '#1d1545', '#261b57', '#312269', '#3d2a78', '#4f3386', '#663f92', '#80509c', '#9d62a6', '#b875ac'];
+  function buildBackground() {
+    const b = new Uint32Array(W * H);
+    const set = (x, y, h) => { if (x >= 0 && y >= 0 && x < W && y < H) b[y * W + x] = pack(h); };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = Math.min(1, y / 96) * (SKY.length - 1), th = BAYER[(y & 3) * 4 + (x & 3)] / 16;
+      set(x, y, SKY[Math.min(SKY.length - 1, Math.floor(t + th * 0.9))]);
+    }
+    // moon + halo
+    for (let y = 4; y < 50; y++) for (let x = 180; x < 240; x++) {
+      const d = Math.hypot(x + 0.5 - 212, y + 0.5 - 24);
+      if (d < 20 && d > 10.5 && BAYER[(y & 3) * 4 + (x & 3)] / 16 < (20 - d) / 20) set(x, y, mix(SKY[Math.floor(y / 96 * 9)], '#fff4d6', 0.18));
+      if (d <= 10.5 && Math.hypot(x + 0.5 - 217, y + 0.5 - 20) > 9.5) set(x, y, d > 9.5 ? '#f3dfb0' : '#fff4d6');
+    }
+    // distant hills
+    for (let x = 0; x < W; x++) { const hy = Math.round(84 + Math.sin(x / 23) * 4 + Math.sin(x / 9 + 1) * 2); for (let y = hy; y < 100; y++) set(x, y, '#2e2462'); }
+    // pine forest line
+    for (let k = 0; k < 34; k++) {
+      const tx = Math.floor(k * 7.8 + hash(k, 3) * 5), th = 12 + Math.floor(hash(k, 7) * 10), base = 100, col = k % 3 ? '#211a4e' : '#1a1442';
+      for (let j = 0; j < th; j++) { const half = Math.floor(j * 0.45) + (j % 4 === 3 ? 1 : 0); for (let i = -half; i <= half; i++) set(tx + i, base - th + j, col); }
+    }
+    // ground
+    for (let y = 100; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = (y - 100) / 44 * 3, th = BAYER[(y & 3) * 4 + (x & 3)] / 16;
+      set(x, y, ['#2f4868', '#29405e', '#233754', '#1d2e48'][Math.min(3, Math.floor(t + th))]);
+    }
+    for (let k = 0; k < 90; k++) { const x = Math.floor(hash(k, 11) * W), y = 101 + Math.floor(hash(k, 12) * 42); set(x, y, '#44668a'); set(x, y - 1, '#3a5a7c'); if (k % 3 === 0) set(x + 1, y - 2, '#44668a'); }
+    // tiny flowers
+    for (let k = 0; k < 16; k++) { const x = Math.floor(hash(k, 21) * W), y = 106 + Math.floor(hash(k, 22) * 36); set(x, y, k % 2 ? '#e9b7ff' : '#b9e2ff'); set(x, y + 1, '#2f5a4a'); }
+    // lantern posts
+    [[18, 72], [238, 72]].forEach(([lx, ly]) => {
+      for (let y = ly + 8; y < 118; y++) { set(lx, y, '#140f2c'); set(lx + 1, y, '#241c46'); }
+      for (let x = lx - 3; x <= lx + 4; x++) set(x, ly + 7, '#140f2c');
+      for (let y = ly; y < ly + 7; y++) for (let x = lx - 2; x <= lx + 3; x++) set(x, y, (x === lx - 2 || x === lx + 3 || y === ly) ? '#3a2a18' : '#ffd66e');
+      set(lx, ly + 3, '#fff6d0'); set(lx + 1, ly + 3, '#fff6d0');
+    });
+    [[19, 75], [239, 75]].forEach(([gx, gy]) => { for (let y = gy - 10; y < gy + 12; y++) for (let x = gx - 11; x < gx + 12; x++) { const d = Math.hypot(x - gx, y - gy); if (d > 5 && d < 11 && BAYER[(y & 3) * 4 + (x & 3)] / 16 < (11 - d) / 14) { const i = y * W + x, v = b[i]; set(x, y, mix(toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), '#ffd66e', 0.25)); } } });
+    // moonstone pads
+    CREATURES.forEach(c => {
+      for (let y = 116; y < 130; y++) for (let x = c.cx - 26; x <= c.cx + 26; x++) {
+        const dx = (x + 0.5 - c.cx) / 24, dy = (y + 0.5 - 123) / 5.5, d = dx * dx + dy * dy;
+        if (d <= 1) set(x, y, d > 0.72 && y < 123 ? '#8a78d6' : y < 122 ? '#5d4da8' : '#4a3c8e');
+        else if (dx * dx + ((y - 1 + 0.5 - 123) / 5.5) ** 2 <= 1) set(x, y, '#241c46');
+      }
+    });
+    return b;
+  }
+  const BG = buildBackground();
+
+  // ---------- Dynamic scene ----------
+  const STARS = Array.from({ length: 70 }, (_, k) => ({ x: Math.floor(hash(k, 1) * W), y: Math.floor(hash(k, 2) * 70), p: hash(k, 5) * 200, big: hash(k, 6) > 0.85 }));
+  const FLIES = Array.from({ length: 9 }, (_, k) => ({ x: hash(k, 31) * W, y: 92 + hash(k, 32) * 40, p: hash(k, 33) * 628 }));
+
+  function blit(buf, spr, ox, oy, glow) {
+    for (let y = 0; y < spr.h; y++) for (let x = 0; x < spr.w; x++) {
+      const v = spr.data[y * spr.w + x]; if (!v) continue;
+      const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v;
+    }
+  }
+
+  function render(buf, t, state) {
+    buf.set(BG);
+    const put = (x, y, h) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); };
+    STARS.forEach(s => {
+      const tw = (Math.sin((t + s.p) / 22) + 1) / 2; if (tw < 0.25) return;
+      put(s.x, s.y, tw > 0.8 ? '#ffffff' : '#c9bcff');
+      if (s.big && tw > 0.7) { put(s.x - 1, s.y, '#8f80d8'); put(s.x + 1, s.y, '#8f80d8'); put(s.x, s.y - 1, '#8f80d8'); put(s.x, s.y + 1, '#8f80d8'); }
+    });
+    CREATURES.forEach((c, i) => {
+      const sel = state.selected === i, since = t - (state.selAt || 0);
+      let bob = Math.round((Math.sin((t + i * 40) / 18) + 1) / 2);
+      if (sel && since < 24) bob -= Math.round(Math.sin(since / 24 * Math.PI) * 9);
+      else if (sel && since >= 24 && since < 40) bob -= Math.round(Math.sin((since - 24) / 16 * Math.PI) * 3);
+      const blink = ((t + i * 57) % 170) < 6;
+      const ox = c.cx - 24, oy = 76 + bob;
+      c.box = [ox, 72, 48, 56];
+      blit(buf, blink ? c.shut : c.open, ox, oy);
+      // signature sparkle
+      const ph = (t + i * 33) % 90;
+      if (ph < 18) { const r = ph < 9 ? 1 : 2, x = ox + c.fx, y = oy + c.fy, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
+      if (sel) { // little heart floating above
+        const hy = 66 + Math.round(Math.sin(t / 10) * 1.5), hx = c.cx - 3;
+        const HEART = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+        HEART.forEach((row, yy) => [...row].forEach((ch, xx) => { if (ch === 'X') put(hx + xx, hy + yy, (yy === 1 && xx === 1) ? '#ffd1e6' : '#ff7fb6'); }));
+      }
+    });
+    // particles
+    state.parts = (state.parts || []).filter(p => p.life > 0);
+    state.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--; if (p.life % 4 < 3) put(p.x, p.y, p.col); });
+    FLIES.forEach(f => {
+      const x = f.x + Math.sin((t + f.p) / 40) * 10, y = f.y + Math.sin((t + f.p) / 27) * 4, on = Math.sin((t + f.p) / 13) > 0;
+      if (on) { put(x, y, '#fff3a0'); put(x + 1, y, '#c8b85a'); }
+    });
+  }
+
+  function burst(state, i, t) {
+    const c = CREATURES[i], cols = [c.spark, '#ffffff', '#ff9fcf', '#b9a4ff'];
+    for (let k = 0; k < 26; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.4; state.parts.push({ x: c.cx, y: 96, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.8, life: 30 + Math.floor(Math.random() * 20), col: cols[k % 4] }); }
+    state.selected = i; state.selAt = t;
+  }
+
+  const api = { W, H, CREATURES, render, burst, Sprite };
+  if (typeof module !== 'undefined') module.exports = api; else root.PX = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(function () {
+  const { W, H, render, burst } = PX;
+  const cv = document.getElementById('scene'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), buf = new Uint32Array(img.data.buffer);
+  const state = { selected: -1, parts: [] };
+  let t = 0, last = 0;
+  (function frame(now) { if (now - last >= 33) { last = now; t++; render(buf, t, state); ctx.putImageData(img, 0, 0); } requestAnimationFrame(frame); })(0);
+
+  const WORDS = ['cat', 'sun', 'pig', 'dog', 'hat', 'bed', 'cup', 'mop', 'bus', 'fox', 'red', 'zip', 'ship', 'chip', 'the', 'said'];
+  const SOUNDS_LIKE = { sun: ['son'], red: ['read'], bus: ['buss'], zip: ['zipp'] };
+  const $ = id => document.getElementById(id);
+  const wordEl = $('word'), micEl = $('mic'), heardEl = $('heard'), statusEl = $('status'), logEl = $('log'), tallyEl = $('tally'), sumEl = $('summary');
+  let idx = 0, rec = null, listening = false, got = false;
+  const results = [];
+  try { const s = JSON.parse(localStorage.getItem('listenResults') || '[]'); if (Array.isArray(s)) results.push(...s); } catch (e) {}
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const ua = navigator.userAgent;
+  const device = /iPad|Macintosh.*Mobile|Macintosh(?=.*Safari)(?!.*Chrome)/.test(ua) && 'ontouchend' in document ? 'iPad' : /iPhone/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : 'Computer';
+  const browser = /EdgA?\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Firefox|FxiOS/.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Other';
+  statusEl.textContent = SR ? 'This browser can listen (' + device + ', ' + browser + '). Tap the microphone and say the word.' : "This browser can't listen for words (" + device + ', ' + browser + '). Try Chrome on Android or Safari on the iPad.';
+  if (!SR) micEl.disabled = true;
+
+  function clean(s) { return s.toLowerCase().replace(/[^a-z' ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function matches(target, alt) {
+    const words = clean(alt).split(' '), ok = [target].concat(SOUNDS_LIKE[target] || []);
+    return words.some(w => ok.includes(w));
+  }
+  function showWord() { wordEl.textContent = WORDS[idx]; heardEl.textContent = ''; }
+  function say(text) {
+    if (!('speechSynthesis' in window)) return;
+    try { if (speechSynthesis.speaking) speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-AU'; u.rate = 0.8; speechSynthesis.speak(u); } catch (e) {}
+  }
+  function drawLog() {
+    logEl.innerHTML = '';
+    results.slice().reverse().forEach(r => {
+      const tr = document.createElement('tr');
+      [r.word, r.heard.length ? r.heard.join(' / ') : '(nothing)', r.ok ? 'Yes' : 'No'].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      logEl.appendChild(tr);
+    });
+    const n = results.length, k = results.filter(r => r.ok).length;
+    tallyEl.textContent = n ? k + ' of ' + n + ' words heard correctly.' : 'No tries yet.';
+    sumEl.value = 'Listening test: ' + device + ', ' + browser + '\n' + k + '/' + n + ' matched\n' + results.map(r => r.word + ' -> ' + (r.heard.join(' / ') || '(nothing)') + (r.ok ? '  OK' : '  MISS')).join('\n');
+    try { localStorage.setItem('listenResults', JSON.stringify(results)); } catch (e) {}
+  }
+  function record(heard) {
+    const target = WORDS[idx], ok = heard.some(a => matches(target, a));
+    results.push({ word: target, heard, ok }); drawLog();
+    heardEl.innerHTML = '';
+    const span = document.createElement('span'); span.className = ok ? 'ok' : 'no';
+    span.textContent = ok ? '✓ Heard "' + target + '"' : 'Heard: ' + (heard[0] ? '"' + heard[0] + '"' : 'nothing');
+    heardEl.appendChild(span);
+    if (!ok && heard.length > 1) heardEl.appendChild(document.createTextNode('  (also: ' + heard.slice(1).join(', ') + ')'));
+    if (ok) burst(state, 2, t);
+  }
+  const ERR = {
+    'not-allowed': 'Microphone permission was blocked. Allow the microphone for this page (or the viewer is blocking it), then try again.',
+    'service-not-allowed': 'The speech service is turned off. On iPad, check that Dictation is on in Settings, then try again.',
+    'no-speech': "Didn't hear anything. Try again a little louder and closer.",
+    'audio-capture': 'No microphone was found.',
+    'network': "Couldn't reach the speech service. Check the internet connection."
+  };
+  function stop() { listening = false; micEl.dataset.on = 'false'; micEl.textContent = '🎤 Say the word'; }
+  micEl.addEventListener('click', () => {
+    if (!SR) return;
+    if (listening && rec) { rec.stop(); return; }
+    try {
+      rec = new SR(); rec.lang = 'en-AU'; rec.interimResults = true; rec.maxAlternatives = 5; rec.continuous = false;
+      got = false;
+      rec.onstart = () => { listening = true; micEl.dataset.on = 'true'; micEl.textContent = '👂 Listening…'; heardEl.textContent = ''; };
+      rec.onresult = e => {
+        const r = e.results[e.results.length - 1];
+        if (!r.isFinal) { heardEl.textContent = '…' + r[0].transcript; return; }
+        got = true; const alts = []; for (let i = 0; i < r.length; i++) if (r[i].transcript.trim()) alts.push(r[i].transcript.trim());
+        record(alts);
+      };
+      rec.onerror = e => { statusEl.textContent = ERR[e.error] || ('Listening stopped: ' + e.error); if (e.error === 'no-speech') record([]); got = true; };
+      rec.onend = () => { stop(); if (!got) heardEl.textContent = "Didn't catch that. Tap and try again."; };
+      rec.start();
+    } catch (err) { stop(); statusEl.textContent = 'Could not start listening: ' + err.message; }
+  });
+  $('next').addEventListener('click', () => { idx = (idx + 1) % WORDS.length; showWord(); });
+  $('hear').addEventListener('click', () => say(WORDS[idx]));
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(sumEl.value); statusEl.textContent = 'Results copied.'; }
+    catch (e) { sumEl.focus(); sumEl.select(); statusEl.textContent = 'Select the text in the box and copy it.'; }
+  });
+  $('clear').addEventListener('click', () => { results.length = 0; drawLog(); });
+  showWord(); drawLog();
+})();
+</script>
+</body>
+</html>
