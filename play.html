@@ -54,6 +54,36 @@ body.spelling .talk { display: none; }
 .spell button.picopt.nope { opacity: 0.35; animation: nope 0.4s ease; }
 @keyframes nope { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 .spell button.picopt.glow { box-shadow: 0 0 0 5px #ffe27a, 0 5px 0 #2b1d45; animation: glowp 1.2s ease-in-out infinite; }
+.tenframe { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px; background: #1a1440; border: 4px solid #2b1d45; border-radius: 12px; width: min(100%, 340px); }
+.tenframe .cell { aspect-ratio: 1; border-radius: 8px; background: #2a2058; border: 2px solid #3b2e6e; }
+.tenframe .cell.on { background: radial-gradient(circle, #fff7c4 0 18%, #ffe27a 30%, rgba(255, 226, 122, 0.25) 60%, #2a2058 72%); border-color: #ffe27a; animation: flick 1.6s ease-in-out infinite; }
+@keyframes flick { 50% { filter: brightness(1.2); } }
+.nums { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; }
+.spell button.num { font-size: clamp(1.6rem, 6vw, 2.2rem); min-width: 58px; min-height: 58px; font-weight: 600; background: #fff7e8; color: #2a1d4a; border: 4px solid #2b1d45; box-shadow: 0 4px 0 #2b1d45; }
+.spell button.num.nope { opacity: 0.4; }
+.loose { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 560px; }
+.loose[hidden] { display: none !important; }
+.spell button.fly { width: 52px; height: 52px; min-width: 0; min-height: 0; padding: 0; border-radius: 50%; border: 0; background: radial-gradient(circle, #fff7c4 0 20%, #ffe27a 34%, rgba(255, 226, 122, 0.2) 62%, transparent 70%); animation: buzz 1.4s ease-in-out infinite; }
+.spell button.fly:nth-child(2n) { animation-delay: -0.5s; } .spell button.fly:nth-child(3n) { animation-delay: -0.9s; }
+.spell button.fly.gone { visibility: hidden; }
+@keyframes buzz { 50% { transform: translate(3px, -5px); } }
+.sleep { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(8, 5, 20, 0.55); z-index: 4; padding: 16px; }
+.sleep[hidden] { display: none; }
+.sleep-card { background: var(--plate); border: 3px solid var(--edge); border-radius: 14px; padding: 18px 22px; text-align: center; max-width: 420px; }
+.zz { font-size: 2.4rem; margin: 0; color: #b9a4ff; }
+.sleep-title { font-size: 1.6rem; font-weight: 600; margin: 4px 0; }
+.sleep-card button { font: inherit; font-size: 0.95rem; margin-top: 10px; color: var(--soft); background: none; border: 2px solid var(--edge); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus); }
+.recrow { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; align-items: center; padding: 4px 0; border-bottom: 2px solid var(--edge); }
+.reclab { font-size: 1.3rem; font-weight: 600; } .reclab small { font-size: 0.85rem; font-weight: 400; color: var(--soft); }
+.recrow button { font-size: 0.95rem !important; min-height: 40px !important; min-width: 44px !important; padding: 4px 10px !important; }
+.recrow button.on { background: #b8475f; color: #fff; }
+.maphead { margin: 10px 0 4px !important; font-weight: 600; color: var(--ink) !important; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 3px 9px; border-radius: 999px; font-size: 0.95rem; border: 2px solid var(--edge); color: var(--soft); }
+.chip.learning { border-color: #e0a33a; color: var(--ink); background: rgba(224, 163, 58, 0.18); }
+.chip.mastered { border-color: #2f9e6e; color: var(--ink); background: rgba(47, 158, 110, 0.22); }
+.mapkey { font-size: 0.85rem; }
 .grownup span { color: var(--soft); font-size: 1rem; }
 .grownup button { font-size: 1.05rem !important; min-height: 48px !important; }
 .tile:focus-visible, .spell button:focus-visible, .slot:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -110,12 +140,29 @@ body.spelling .talk { display: none; }
     <div class="pics" id="pics" hidden></div>
     <div class="grownup" id="grownup" hidden><span>Grown-up:</span><button type="button" id="gOk">✓ Read it</button><button type="button" id="gSkip">Skip word</button></div>
   </section>
+  <section class="spell bonds" id="bonds" hidden aria-live="polite">
+    <p class="spell-msg" id="bondMsg"></p>
+    <div class="tenframe" id="tenframe" role="img"></div>
+    <div class="nums" id="nums"></div>
+    <div class="loose" id="loose" hidden></div>
+    <div class="spell-btns"><button type="button" id="bondAgain" aria-label="Hear it again">🔊</button></div>
+  </section>
+</div>
+<div class="sleep" id="sleep" hidden>
+  <div class="sleep-card"><p class="zz">Zzz…</p><p class="sleep-title">See you tomorrow!</p><p id="sleepSummary"></p><button type="button" id="wake">Grown-ups: keep playing</button></div>
 </div>
 <div class="settings" id="settings" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="setTitle">
     <h2 id="setTitle">Grown-up settings</h2>
     <p>Choose the voice that reads to her. Tap one to hear it.</p>
     <div class="voice-list" id="voiceList"></div>
+    <h3>Play time</h3>
+    <p>After this long, her companion gets sleepy and says goodnight (only between activities).</p>
+    <div class="row seg" id="sessionBtns" style="margin-top:0"></div>
+    <div class="row" style="margin-top:8px"><button type="button" id="sleepNow">Say goodnight now</button></div>
+    <h3>Letter sounds</h3>
+    <p>Record the pure sound, like "sss" or "mmm", not "suh". Each recording takes about 1.5 seconds and replaces the device voice for that sound. Recordings stay on this device.</p>
+    <div id="recorder"></div>
     <h3>Progress</h3>
     <div id="progress"></div>
     <h3>Testing</h3>
@@ -510,9 +557,8 @@ body.spelling .talk { display: none; }
   w.poly([[418, 108], [424, 98], [424, 108]], '#4a3358'); w.poly([[444, 108], [438, 98], [438, 108]], '#4a3358');
   [[431, 50, 36, 24, '#2f2566'], [406, 60, 18, 13, '#2f2566'], [456, 60, 18, 13, '#2f2566'], [431, 47, 33, 21, '#3c2f7a'], [409, 58, 15, 10, '#3c2f7a'], [453, 58, 15, 10, '#3c2f7a'], [424, 41, 18, 10, '#4b3c8e'], [441, 44, 14, 8, '#4b3c8e']]
     .forEach(([x, y, rx, ry, c]) => w.ellipse(x, y, rx, ry, c));
-  [[404, 62], [416, 70], [430, 72], [446, 68], [458, 63], [422, 56], [440, 55]].forEach(([lx, ly], k) => {
-    for (let y = ly - 5; y < ly; y++) w.set(lx, y, '#1a1440'); w.rect(lx - 2, ly, 5, 5, OUT); w.rect(lx - 1, ly + 1, 3, 3, k % 3 === 0 ? '#ffb3da' : k % 3 === 1 ? '#ffd66e' : '#b9e2ff');
-  });
+  const TREE_LANTERNS = [[404, 62], [416, 70], [430, 72], [446, 68], [458, 63], [422, 56], [440, 55], [412, 50], [450, 49], [431, 42]];
+  TREE_LANTERNS.forEach(([lx, ly]) => { for (let y = ly - 5; y < ly; y++) w.set(lx, y, '#1a1440'); w.rect(lx - 2, ly, 5, 5, OUT); w.rect(lx - 1, ly + 1, 3, 3, '#4a3f7a'); });
 
   // lantern posts
   function lantern(lx) {
@@ -603,6 +649,14 @@ body.spelling .talk { display: none; }
     STARS.forEach(st => { const tw = (Math.sin((t + st.p) / 22) + 1) / 2; if (tw < 0.25) return; put(st.x, st.y, tw > 0.8 ? '#ffffff' : '#c9bcff'); if (st.big && tw > 0.7) { put(st.x - 1, st.y, '#8f80d8'); put(st.x + 1, st.y, '#8f80d8'); put(st.x, st.y - 1, '#8f80d8'); put(st.x, st.y + 1, '#8f80d8'); } });
     const cam = s.cam | 0;
     for (let y = 0; y < H; y++) { const row = y * WW + cam, o = y * W; for (let x = 0; x < W; x++) { const v = w.d[row + x]; if (v) buf[o + x] = v; } }
+    // lit lanterns on the Wishing Tree
+    const lit = s.lit || 0;
+    TREE_LANTERNS.forEach(([lx, ly], k) => {
+      if (k >= lit) return; const sx = lx - cam; if (sx < -6 || sx > W + 6) return;
+      const cols = ['#ffd66e', '#ffb3da', '#b9e2ff'], c = cols[k % 3], fl = (t + k * 13) % 40 < 20;
+      for (let y = -4; y < 9; y++) for (let x = -5; x < 6; x++) { const d = Math.hypot(x, y - 2); if (d > 3 && d < 6 && dith(lx + x, ly + y + (fl ? 1 : 0)) < (6 - d) / 7) { const X = sx + x, Y = ly + y; if (X >= 0 && X < W && Y >= 0 && Y < H) buf[Y * W + X] = pack(mix(c, '#2a1f5a', 0.35)); } }
+      for (let y = 1; y < 4; y++) for (let x = -1; x < 2; x++) { const X = sx + x, Y = ly + y; if (X >= 0 && X < W) buf[Y * W + X] = pack(y === 1 && x === -1 ? '#ffffff' : c); }
+    });
     // fog wall (moves back as powers clear it)
     const fx0 = s.fogX;
     for (let y = 30; y < 140; y++) for (let x = Math.max(cam, Math.floor(fx0)); x < Math.min(WW, cam + W); x++) {
@@ -642,7 +696,7 @@ body.spelling .talk { display: none; }
     for (let k = 0; k < (n || 20); k++) { const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.3; s.parts.push({ x: wx, y: wy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.7, life: 26 + Math.floor(Math.random() * 18), col: cols[k % cols.length] }); }
   }
 
-  const api = { dith, WW, FEET, SPOT_X, FOG_STOPS, hotspots, MIN_X, maxX, renderVillage, sparkle };
+  const api = { TREE_LANTERNS, dith, WW, FEET, SPOT_X, FOG_STOPS, hotspots, MIN_X, maxX, renderVillage, sparkle };
   if (typeof module !== 'undefined') module.exports = api; else root.VILLAGE = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -707,6 +761,50 @@ body.spelling .talk { display: none; }
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
+// Skills map + spaced review. Each skill: { lvl 0-5, due 'YYYY-MM-DD', days: [dates answered alone], seen }.
+// Answered alone -> level up and wait longer; with help -> see again tomorrow; missed -> back to the start.
+(function (root) {
+  'use strict';
+  const GAPS = [0, 1, 2, 4, 7, 14]; // days until next review, by level
+  const MASTER_DAYS = 2; // answered alone on this many separate days = mastered
+
+  function dayStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function addDays(s, n) { const [y, m, d] = s.split('-').map(Number); return dayStr(new Date(y, m - 1, d + n)); }
+
+  function create(store, today) {
+    const get = id => store[id] || (store[id] = { lvl: 0, due: today(), days: [], seen: 0 });
+    return {
+      get,
+      record(id, outcome) {
+        const s = get(id), t = today(); s.seen++;
+        if (outcome === 'strong') { if (!s.days.includes(t)) s.days.push(t); if (s.days.length > 12) s.days.shift(); s.lvl = Math.min(5, s.lvl + 1); s.due = addDays(t, GAPS[s.lvl]); }
+        else if (outcome === 'ok') { s.due = addDays(t, 1); }
+        else { s.lvl = 0; s.due = t; }
+      },
+      state(id) { const s = store[id]; if (!s || !s.seen) return 'new'; return s.days.length >= MASTER_DAYS ? 'mastered' : 'learning'; },
+      isDue(id) { const s = store[id]; return !!s && s.seen > 0 && s.due <= today(); },
+      // due skills first (lowest level first), then least-known; ties shuffled
+      pick(ids, n) {
+        const t = today(), score = id => { const s = store[id]; if (!s || !s.seen) return 50 + Math.random(); return (s.due <= t ? 0 : 20) + s.lvl * 3 + Math.random(); };
+        return ids.slice().sort((a, b) => score(a) - score(b)).slice(0, n);
+      },
+      count(ids, st) { return ids.filter(id => this.state(id) === st).length; },
+    };
+  }
+  // rebuild from an older save's attempt log
+  function fromLog(log, store) {
+    const tmpToday = { v: '2000-01-01' }, sk = create(store, () => tmpToday.v);
+    log.forEach(e => {
+      if (!e.w) return; tmpToday.v = e.d || tmpToday.v; const id = 'w:' + e.w;
+      if (e.r === 'read') sk.record(id, 'strong'); else if (['picked', 'helped', 'grownup'].includes(e.r)) sk.record(id, 'ok'); else if (['close', 'miss', 'pickmiss'].includes(e.r)) sk.record(id, 'miss');
+    });
+    return store;
+  }
+  const api = { create, fromLog, addDays, dayStr, GAPS, MASTER_DAYS };
+  if (typeof module !== 'undefined') module.exports = api; else root.SKILLS = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
 (function () {
   'use strict';
   const { W, H, CREATURES, render: renderChoose, burst } = PX;
@@ -722,11 +820,14 @@ body.spelling .talk { display: none; }
 
   // ---------- Save ----------
   const SAVE_KEY = 'starlight.save.v1';
-  const fresh = () => ({ v: 1, companion: null, metSpot: false, powers: [], visits: 0, started: new Date().toISOString(), lastPowerDate: null, allowDate: null, log: [], fogStage: 0, charged: true, pipFriend: false, emo: [] });
+  const fresh = () => ({ v: 1, companion: null, metSpot: false, powers: [], visits: 0, started: new Date().toISOString(), lastPowerDate: null, allowDate: null, log: [], fogStage: 0, charged: true, pipFriend: false, emo: [], skills: null, lit: 0, lastLanternDate: null, treeIntro: false, warmupDate: null, sessionMin: 15, daily: null });
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   let save = fresh();
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.v === 1) save = Object.assign(fresh(), s); } catch (e) {}
   const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+  if (!save.skills) save.skills = SKILLS.fromLog(save.log || [], {});
+  const SK = SKILLS.create(save.skills, today);
+  function daily() { if (!save.daily || save.daily.date !== today()) save.daily = { date: today(), words: [], bonds: 0, lanterns: 0 }; return save.daily; }
 
   // ---------- DOM ----------
   const $ = id => document.getElementById(id);
@@ -757,14 +858,36 @@ body.spelling .talk { display: none; }
   let tries = 0; (function poll() { if (loadVoices() || ++tries > 24) { drawVoices(); return; } setTimeout(poll, 250); })();
   if (canSpeak && speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', () => { loadVoices(); drawVoices(); });
   function speak(text) {
-    if (!canSpeak || !text) return;
-    try {
-      if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[⭐🌙❄️✨]/g, '')), v = chosenVoice();
-      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-AU';
-      u.pitch = 1.15; u.rate = 0.9; speechSynthesis.speak(u);
+    return new Promise(res => {
+      if (!canSpeak || !text) { res(); return; }
+      try {
+        if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text.replace(/[⭐🌙❄️✨]/g, '')), v = chosenVoice();
+        if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-AU';
+        u.pitch = 1.15; u.rate = 0.9; let done = false; const fin = () => { if (!done) { done = true; res(); } };
+        u.onend = fin; u.onerror = fin; setTimeout(fin, 400 + text.length * 90);
+        speechSynthesis.speak(u);
+      } catch (e) { res(); }
+    });
+  }
+
+  // ---------- Recorded letter sounds (stored on this device) ----------
+  const RECS = {};
+  function db() { return new Promise((res, rej) => { try { const r = indexedDB.open('starlight', 1); r.onupgradeneeded = () => r.result.createObjectStore('sounds'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
+  async function dbDo(mode, fn) { const d = await db(); return new Promise((res, rej) => { const tx = d.transaction('sounds', mode), st2 = tx.objectStore('sounds'), r = fn(st2); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); }); }
+  async function loadRecs() {
+    try { const d = await db(); const tx = d.transaction('sounds', 'readonly'), os = tx.objectStore('sounds'), rq = os.openCursor();
+      rq.onsuccess = () => { const c = rq.result; if (c) { RECS[c.key] = URL.createObjectURL(c.value); c.continue(); } };
     } catch (e) {}
   }
+  loadRecs();
+  function playRec(t) {
+    return new Promise(res => {
+      const url = RECS[t]; if (!url) { res(false); return; }
+      try { if (canSpeak) speechSynthesis.cancel(); const a = new Audio(url); let done = false; const fin = () => { if (!done) { done = true; res(true); } }; a.onended = fin; a.onerror = fin; setTimeout(fin, 2500); a.play().catch(fin); } catch (e) { res(false); }
+    });
+  }
+  async function playSound(t) { if (RECS[t]) return playRec(t); const snd = WORDS.SOUNDS[t]; return speak(snd.say + '... ' + snd.key); }
 
   // ---------- Dialogue ----------
   let talking = false, lastLine = '';
@@ -783,7 +906,7 @@ body.spelling .talk { display: none; }
       options.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.textContent = o; b.addEventListener('click', () => res(i)); choicesEl.appendChild(b); });
     });
   }
-  function endTalk() { talking = false; talkEl.hidden = true; if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  function endTalk() { talking = false; talkEl.hidden = true; choicesEl.innerHTML = ''; if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
   againBtn.addEventListener('click', () => speak(lastLine));
 
   // ---------- HUD ----------
@@ -803,11 +926,11 @@ body.spelling .talk { display: none; }
   }
 
   // ---------- Game state ----------
-  const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null, pops: [], spelling: false, powersN: save.powers.length, fx: [], fogX: V.FOG_STOPS[save.fogStage], pip: { x: 1010, mood: save.pipFriend ? 'happy' : 'scared', follow: save.pipFriend, moving: false } };
+  const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null, pops: [], spelling: false, powersN: save.powers.length, fx: [], lit: save.lit, sleepy: false, sessionStart: 0, fogX: V.FOG_STOPS[save.fogStage], pip: { x: 1010, mood: save.pipFriend ? 'happy' : 'scared', follow: save.pipFriend, moving: false } };
   const compInfo = () => CREATURES.find(x => x.id === save.companion);
 
   async function begin() {
-    startEl.hidden = true; chime([523, 659, 784]);
+    startEl.hidden = true; chime([523, 659, 784]); st.sessionStart = Date.now();
     if (save.companion) { enterVillage(true); return; }
     st.mode = 'choose';
     await talk('', 'Three baby companions are waiting for a friend. Tap the one you like best!');
@@ -838,7 +961,15 @@ body.spelling .talk { display: none; }
         await talk(c.name, 'Wow! This is ' + CONFIG.worldName + '. This is our new home!');
         await talk(c.name, 'Tap on the path to walk. Let\'s find someone to say hello to!');
       } else {
-        await talk(c.name, save.metSpot ? 'Yay, you\'re back! Let\'s go and say hi to ' + CONFIG.petName + '!' : 'Yay, you\'re back! Let\'s go exploring!');
+        const firstToday = save.warmupDate !== today();
+        await talk(c.name, firstToday ? 'Good morning! I missed you! Did you sleep well?' : 'Yay, you\'re back!');
+        const due = learnedWords().filter(w => SK.isDue('w:' + w));
+        if (firstToday && due.length) {
+          const a = await ask(c.name, 'Let\'s wake up our brains with a quick word warm-up!', ['Yes!', 'Later']);
+          if (a === 0) { endTalk(); await runWords(weakest(due, 3).map(w => ({ w, review: true }))); await talk(c.name, 'Brilliant! My brain is wide awake now!'); }
+          save.warmupDate = today(); persist();
+        } else if (firstToday) { save.warmupDate = today(); persist(); }
+        await talk(c.name, save.metSpot ? 'Let\'s go and see what adventures are waiting!' : 'Let\'s go exploring!');
       }
       endTalk();
     }, 400);
@@ -870,7 +1001,19 @@ body.spelling .talk { display: none; }
       runSpell(n);
     },
     async home() { const c = compInfo(); await talk(c.name, 'This is our cosy home! One day we can decorate it however we like.'); endTalk(); },
-    async tree() { const c = compInfo(); await talk(c.name, 'Look at all the little lanterns! This is the Wishing Tree.'); await talk(c.name, 'I wonder what happens when we light more of them?'); endTalk(); },
+    async tree() {
+      const c = compInfo(); st.comp.face = 1;
+      if (save.lit >= 10) { await talk(c.name, 'All ten lanterns are glowing! The Wishing Tree is ready to grant a wish...'); await talk(c.name, 'I wonder what we should wish for? Maybe something to open the Frost Gate!'); endTalk(); return; }
+      if (!save.treeIntro) {
+        await talk(c.name, 'This is the Wishing Tree! But look, most of its lanterns are dark.');
+        await talk(c.name, CONFIG.petName + ' says that when all ten lanterns glow, the tree grants a wish!');
+        await talk(c.name, 'Each lantern needs exactly ten fireflies to light up.');
+        save.treeIntro = true; persist();
+      }
+      if (save.lastLanternDate === today() && save.allowDate !== today()) { await talk(c.name, 'We lit a lantern today! The fireflies need to rest. Let\'s light another one tomorrow.'); endTalk(); return; }
+      const a = await ask(c.name, 'Shall we catch fireflies to light a lantern?', ['Yes!', 'Later']);
+      endTalk(); if (a === 0) runLantern();
+    },
     async bakery() { const c = compInfo(); await talk(c.name, 'Mmm, the Moon Bakery! It smells like warm bread. It opens in the morning.'); endTalk(); },
     async fog() {
       const c = compInfo(), p = POWERS[c.id], n = save.powers.length; st.comp.face = 1;
@@ -938,7 +1081,14 @@ body.spelling .talk { display: none; }
   function sayMsg(t) { spellMsg = t; msgEl.textContent = t; speak(t); }
   $('spellAgain').addEventListener('click', () => speak(spellMsg));
   function logEmo(q, a, ok) { save.emo.push({ q, a, ok, d: today() }); if (save.emo.length > 200) save.emo.splice(0, save.emo.length - 200); persist(); }
-  function logTry(e) { save.log.push(Object.assign({ d: today() }, e)); if (save.log.length > 600) save.log.splice(0, save.log.length - 600); persist(); }
+  function logTry(e) {
+    save.log.push(Object.assign({ d: today() }, e)); if (save.log.length > 600) save.log.splice(0, save.log.length - 600);
+    const id = 'w:' + e.w;
+    if (e.r === 'read') { SK.record(id, 'strong'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
+    else if (['picked', 'helped', 'grownup'].includes(e.r)) { SK.record(id, 'ok'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
+    else if (['close', 'miss', 'pickmiss'].includes(e.r)) SK.record(id, 'miss');
+    persist();
+  }
   const clean = x => x.toLowerCase().replace(/[^a-z' ]/g, ' ').replace(/\s+/g, ' ').trim();
   function classify(word, alts) {
     const ok = [word].concat(WORDS.SOUNDS_LIKE[word] || []);
@@ -975,7 +1125,7 @@ body.spelling .talk { display: none; }
       ts.forEach((t, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'tile' + (WORDS.VOWELS.includes(t) ? ' vowel' : ''); b.textContent = t;
         b.setAttribute('aria-label', 'Hear the sound ' + t);
-        b.addEventListener('click', () => { const snd = WORDS.SOUNDS[t]; speak(snd.say + '... ' + snd.key); b.classList.remove('glow'); void b.offsetWidth; b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 300); });
+        b.addEventListener('click', () => { playSound(t); b.classList.remove('glow'); void b.offsetWidth; b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 300); });
         tilesEl.appendChild(b);
       });
       sayMsg(first ? 'Tap each letter to hear its sound. Then tap the microphone, and read the word out loud!' : review ? 'Do you remember this word? Read it out loud!' : SR ? 'Read this word out loud!' : 'Read this word! Then tap Pictures to find it, or read it to a grown-up.');
@@ -1006,7 +1156,8 @@ body.spelling .talk { display: none; }
           const ti = tileAt(word, c.at), t = ts[ti], where = ti === 0 ? 'first' : ti === ts.length - 1 ? 'last' : 'middle';
           logTry({ w: word, r: 'close', h: c.heard, p: t });
           [...tilesEl.children].forEach((b, i) => b.classList.toggle('glow', i === ti));
-          sayMsg('I heard ' + c.heard + '. Listen to the ' + where + ' sound... ' + WORDS.SOUNDS[t].say + '. Try again!');
+          if (RECS[t]) { spellMsg = 'I heard ' + c.heard + '. Listen to the ' + where + ' sound. Try again!'; msgEl.textContent = spellMsg; speak('I heard ' + c.heard + '. Listen to the ' + where + ' sound.').then(() => playRec(t)); }
+          else sayMsg('I heard ' + c.heard + '. Listen to the ' + where + ' sound... ' + WORDS.SOUNDS[t].say + '. Try again!');
         } else {
           logTry({ w: word, r: 'miss', h: c.heard });
           sayMsg((c.heard ? 'Hmm, I heard ' + c.heard + '. ' : '') + 'Let\'s try again! Tap the letters to hear their sounds.');
@@ -1016,8 +1167,9 @@ body.spelling .talk { display: none; }
       };
       helpBtn.onclick = () => {
         helped = true; logTry({ w: word, r: 'hint' });
-        const seq = ts.map(t => WORDS.SOUNDS[t].say).join('... ') + '... ' + word + '.';
-        spellMsg = 'Listen: ' + seq + ' Now you say it!'; msgEl.textContent = 'Listen, then you say it!'; speak(spellMsg);
+        msgEl.textContent = 'Listen, then you say it!';
+        if (ts.every(t => RECS[t])) { spellMsg = 'Listen, then you say it!'; (async () => { await speak('Listen.'); for (const t of ts) { await playRec(t); await wait(150); } await speak(word + '. Now you say it!'); })(); }
+        else { const seq = ts.map(t => WORDS.SOUNDS[t].say).join('... ') + '... ' + word + '.'; spellMsg = 'Listen: ' + seq + ' Now you say it!'; speak(spellMsg); }
         [...tilesEl.children].forEach((b, i) => setTimeout(() => { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); }, 700 + i * 650));
       };
       picBtn.onclick = () => {
@@ -1050,11 +1202,7 @@ body.spelling .talk { display: none; }
     const score = w => { let k = 0; for (let i = 0; i < Math.min(w.length, word.length); i++) if (w[i] === word[i]) k += 2; if (w.length === word.length) k += 1; return k + Math.random() * 1.5; };
     return all.map(w => [w, score(w)]).sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
   }
-  function weakest(words, n) {
-    const score = {}; words.forEach(w => score[w] = Math.random() * 0.5);
-    save.log.forEach(e => { if (score[e.w] === undefined) return; if (e.r === 'read') score[e.w] += 2; else if (e.r === 'helped' || e.r === 'grownup' || e.r === 'picked') score[e.w] += 1; else if (['close', 'miss', 'skip', 'pickmiss'].includes(e.r)) score[e.w] -= 1; });
-    return words.slice().sort((a, b) => score[a] - score[b]).slice(0, n);
-  }
+  function weakest(words, n) { return SK.pick(words.map(w => 'w:' + w), n).map(id => id.slice(2)); }
   async function runWords(list) {
     st.spelling = true; document.body.classList.add('spelling'); spellEl.hidden = false;
     let read = 0;
@@ -1066,8 +1214,7 @@ body.spelling .talk { display: none; }
     const a = await ask(c.name, 'My power is all used up. Shall we read two words to recharge it?', ['Yes!', 'Later']);
     if (a !== 0) { await talk(c.name, 'Okay! Tap the fog when you\'re ready to recharge.'); endTalk(); return; }
     endTalk();
-    const learned = WORDS.SPELLS.slice(0, save.powers.length).flatMap(x => x.words);
-    await runWords(weakest(learned, 2).map(w => ({ w, review: true })));
+    await runWords(weakest(learnedWords(), 2).map(w => ({ w, review: true })));
     save.charged = true; persist();
     chime([523, 659, 784, 1046]); for (let k = 0; k < 3; k++) setTimeout(() => V.sparkle(st, st.comp.x, WORLD_Y(), POWERS[c.id].cols, 24), k * 200);
     await talk(c.name, 'I feel it! My power is full again. Tap a power to clear more fog!');
@@ -1087,13 +1234,8 @@ body.spelling .talk { display: none; }
     await askRecharge(c);
   }
   const WORLD_Y = () => V.FEET - 30;
-  function pickReview(n) {
-    if (n === 0) return null;
-    const earlier = WORDS.SPELLS.slice(0, n).flatMap(x => x.words), score = {};
-    earlier.forEach(w => score[w] = 0);
-    save.log.forEach(e => { if (score[e.w] === undefined) return; if (e.r === 'read') score[e.w] += 2; else if (e.r === 'helped' || e.r === 'grownup') score[e.w] += 1; else if (e.r === 'close' || e.r === 'miss' || e.r === 'skip') score[e.w] -= 1; });
-    return earlier.sort((a, b) => score[a] - score[b])[0];
-  }
+  const learnedWords = () => WORDS.SPELLS.slice(0, save.powers.length).flatMap(x => x.words);
+  function pickReview(n) { if (n === 0) return null; return SK.pick(WORDS.SPELLS.slice(0, n).flatMap(x => x.words).map(w => 'w:' + w), 1)[0].slice(2); }
   async function runSpell(n) {
     const c = compInfo(), p = POWERS[c.id], words = WORDS.SPELLS[n].words.slice(), rev = pickReview(n);
     const list = (rev ? [{ w: rev, review: true }] : []).concat(words.map(w => ({ w })));
@@ -1108,6 +1250,92 @@ body.spelling .talk { display: none; }
     if (n === 0) await talk(CONFIG.petName, 'Your powers might even clear the snowy fog on the way to Frosty Peaks...');
     endTalk();
   }
+  // ---------- Firefly lanterns: number bonds to 10 ----------
+  const bondsEl = $('bonds'), frameEl = $('tenframe'), numsEl = $('nums'), looseEl = $('loose'), bmsgEl = $('bondMsg');
+  let bondMsg = '';
+  $('bondAgain').addEventListener('click', () => speak(bondMsg));
+  function bsay(t) { bondMsg = t; bmsgEl.textContent = t; return speak(t); }
+  function drawFrame(k) { frameEl.innerHTML = ''; for (let i = 0; i < 10; i++) { const d = document.createElement('div'); d.className = 'cell' + (i < k ? ' on' : ''); frameEl.appendChild(d); } frameEl.setAttribute('aria-label', k + ' fireflies in the lantern'); }
+  const EASY = [5, 8, 9, 7, 6, 4, 3, 2, 1];
+  function pickBonds(n) {
+    const ids = EASY.map(k => 'b:' + k), t = today();
+    const seen = ids.filter(id => SK.get(id).seen > 0).sort((a, b) => (SK.get(a).due <= t ? 0 : 10) + SK.get(a).lvl - ((SK.get(b).due <= t ? 0 : 10) + SK.get(b).lvl));
+    const fresh = ids.filter(id => !SK.get(id).seen);
+    const due = seen.filter(id => SK.isDue(id)), rest = seen.filter(id => !SK.isDue(id));
+    const out = due.slice(0, n); if (out.length < n && fresh.length) out.push(fresh[0]);
+    rest.concat(fresh.slice(1)).forEach(id => { if (out.length < n) out.push(id); });
+    return out.slice(0, n).map(id => +id.slice(2)).sort(() => Math.random() - 0.5);
+  }
+  function bondRound(k) {
+    return new Promise(async resolve => {
+      const need = 10 - k; let fill = k, tried = false;
+      drawFrame(fill); numsEl.innerHTML = ''; looseEl.innerHTML = ''; looseEl.hidden = true; numsEl.hidden = false;
+      const done = async (strong) => {
+        SK.record('b:' + k, strong ? 'strong' : 'miss'); daily().bonds++; persist();
+        chime([784, 988, 1175, 1568]);
+        await bsay(k + ' and ' + need + ' make ten!'); await wait(900); resolve(strong);
+      };
+      for (let i = 1; i <= 9; i++) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'num'; b.textContent = i;
+        b.addEventListener('click', async () => {
+          if (tried) return; tried = true;
+          if (i === need) {
+            numsEl.hidden = true; await bsay('Yes! Let\'s count them in!');
+            for (let j = 0; j < need; j++) { fill++; drawFrame(fill); chime([660 + fill * 40], 'sine'); await speak(String(fill)); await wait(120); }
+            done(true);
+          } else {
+            b.classList.add('nope'); chime([330, 262], 'sine'); numsEl.hidden = true;
+            await bsay('Let\'s find out! Tap the fireflies to fill the lantern.');
+            looseEl.hidden = false;
+            for (let j = 0; j < 9; j++) {
+              const f = document.createElement('button'); f.type = 'button'; f.className = 'fly'; f.setAttribute('aria-label', 'Firefly');
+              f.addEventListener('click', async () => {
+                if (fill >= 10) return; f.disabled = true; f.classList.add('gone'); fill++; drawFrame(fill); chime([660 + fill * 40], 'sine'); speak(String(fill));
+                if (fill === 10) { looseEl.hidden = true; await wait(700); await bsay('Full! We needed ' + need + ' more fireflies.'); done(false); }
+              });
+              looseEl.appendChild(f);
+            }
+          }
+        });
+        numsEl.appendChild(b);
+      }
+      await bsay('This lantern has ' + k + ' firefl' + (k === 1 ? 'y' : 'ies') + '. It needs ten. How many more do we need?');
+    });
+  }
+  async function runLantern() {
+    const c = compInfo();
+    st.spelling = true; document.body.classList.add('spelling'); bondsEl.hidden = false;
+    const ks = pickBonds(3);
+    for (const k of ks) await bondRound(k);
+    bondsEl.hidden = true; document.body.classList.remove('spelling'); st.spelling = false;
+    save.lit = Math.min(10, save.lit + 1); save.lastLanternDate = today(); daily().lanterns++; persist(); st.lit = save.lit;
+    const [lx, ly] = V.TREE_LANTERNS[save.lit - 1]; chime([523, 659, 784, 1046, 1318]);
+    for (let k = 0; k < 3; k++) setTimeout(() => V.sparkle(st, lx, ly + 2, ['#ffd66e', '#ffffff', '#ffb3da'], 20), k * 220);
+    await talk(c.name, 'The lantern is glowing! That\'s ' + save.lit + ' of ten lanterns lit.');
+    if (save.lit < 10) await talk(c.name, 'Let\'s light another one tomorrow!');
+    else await talk(c.name, 'All ten! The Wishing Tree is shimmering... something magical is going to happen!');
+    endTalk();
+  }
+
+  // ---------- Goodnight ----------
+  const sleepEl = $('sleep');
+  async function goodnight() {
+    const c = compInfo(); st.sleepy = true;
+    await talk(c.name, 'Yaaawn... I\'m getting really sleepy.');
+    await talk(c.name, 'Sleep helps our brains keep everything we learned today. Let\'s go home to bed!');
+    endTalk();
+    st.comp.tx = 76; st.comp.walking = Math.abs(st.comp.x - 76) > 1; st.arrive = null;
+    for (let i = 0; i < 400 && st.comp.walking; i++) await wait(50);
+    const d = daily(), bits = [];
+    if (d.words.length) bits.push('read ' + d.words.length + ' word' + (d.words.length === 1 ? '' : 's'));
+    if (d.bonds) bits.push('made ten ' + d.bonds + ' time' + (d.bonds === 1 ? '' : 's'));
+    await talk(c.name, bits.length ? 'Today you ' + bits.join(' and ') + '! I\'m so proud of you.' : 'Thank you for playing with me today!');
+    await talk(c.name, 'Goodnight! See you tomorrow!');
+    endTalk();
+    st.mode = 'sleep'; sleepEl.hidden = false; $('sleepSummary').textContent = bits.length ? 'Today: ' + bits.join(', ') + '.' : '';
+  }
+  $('wake').addEventListener('click', () => { sleepEl.hidden = true; st.mode = 'village'; st.sleepy = false; st.sessionStart = Date.now(); });
+
   function castPower(i) {
     if (talking || st.spelling || st.mode !== 'village') return;
     const p = POWERS[save.companion], kind = p.fx[i];
@@ -1181,7 +1409,7 @@ body.spelling .talk { display: none; }
       CREATURES.forEach((c, i) => { const [bx, by, bw, bh] = c.box || [0, 0, 0, 0]; if (sx >= bx && sx < bx + bw && sy >= by && sy < by + bh) pickCompanion(i); });
       return;
     }
-    if (st.mode !== 'village' || talking || st.spelling) return;
+    if (st.mode !== 'village' || talking || st.spelling || st.sleepy) return;
     const wx = sx + st.cam, hit = V.hotspots(st).find(h => wx >= h.x0 && wx < h.x1 && sy >= h.y0 && sy < h.y1);
     const tx = Math.max(V.MIN_X, Math.min(V.maxX(st), hit ? hit.stand : wx));
     st.comp.tx = tx; st.comp.walking = Math.abs(tx - st.comp.x) > 1; st.arrive = hit ? hit.id : null;
@@ -1203,6 +1431,7 @@ body.spelling .talk { display: none; }
     const want = Math.max(0, Math.min(V.WW - W, c.x - W / 2));
     st.cam += (want - st.cam) * 0.12; if (Math.abs(want - st.cam) < 0.5) st.cam = want;
     st.talking = talking;
+    if (!st.sleepy && !talking && !st.spelling && save.sessionMin > 0 && st.sessionStart && Date.now() - st.sessionStart > save.sessionMin * 60000) goodnight();
   }
   function drawPops() {
     st.pops = st.pops.filter(p => st.t - p.t0 < 75);
@@ -1212,10 +1441,18 @@ body.spelling .talk { display: none; }
       for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const v = ic.data[(y >> 1) * 16 + (x >> 1)]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; }
     });
   }
+  const ZZZ = ['XXXX', '..X.', '.X..', 'XXXX'];
+  function drawSleep() {
+    for (let i = 0; i < buf.length; i++) { const v = buf[i]; buf[i] = (255 << 24 | ((v >> 17) & 0x7f) << 16 | ((v >> 9) & 0x7f) << 8 | ((v >> 1) & 0x7f)) >>> 0; }
+    const x0 = st.comp.x - st.cam + 12, y0 = V.FEET - 60;
+    for (let z = 0; z < 3; z++) { const ph = (st.t / 2 + z * 20) % 60, zx = Math.round(x0 + z * 7 + Math.sin(ph / 8) * 2), zy = Math.round(y0 - ph * 0.5 - z * 6); ZZZ.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === 'X') { const X = zx + xx, Y = zy + yy; if (X >= 0 && X < W && Y >= 0 && Y < H) buf[Y * W + X] = PX.pack('#dfe4ff'); } })); }
+  }
   function frame(now) {
     if (now - last >= 33) {
       last = now; st.t++; update();
-      if (st.mode === 'village') { V.renderVillage(buf, st.t, st); drawFx(); drawPops(); } else renderChoose(buf, st.t, st.choose);
+      if (st.mode === 'village') { V.renderVillage(buf, st.t, st); drawFx(); drawPops(); }
+      else if (st.mode === 'sleep') { V.renderVillage(buf, st.t, st); drawSleep(); }
+      else renderChoose(buf, st.t, st.choose);
       ctx.putImageData(img, 0, 0);
     }
     requestAnimationFrame(frame);
@@ -1224,7 +1461,42 @@ body.spelling .talk { display: none; }
 
   // ---------- Settings ----------
   const setEl = $('settings'), listEl = $('voiceList'), resetBtn = $('reset');
-  $('gear').addEventListener('click', () => { setEl.hidden = false; drawVoices(); drawProgress(); $('closeSet').focus(); });
+  $('gear').addEventListener('click', () => { setEl.hidden = false; drawVoices(); drawProgress(); drawSession(); drawRecorder(); $('closeSet').focus(); });
+  function drawSession() {
+    const el = $('sessionBtns'); el.innerHTML = '';
+    [[10, '10 min'], [15, '15 min'], [20, '20 min'], [0, 'No limit']].forEach(([m, label]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('aria-pressed', String(save.sessionMin === m)); b.addEventListener('click', () => { save.sessionMin = m; persist(); drawSession(); }); el.appendChild(b); });
+  }
+  $('sleepNow').addEventListener('click', () => { setEl.hidden = true; if (st.mode === 'village' && !talking && !st.spelling && !st.sleepy) goodnight(); });
+  let mediaRec = null;
+  function soundList() { const set = new Set(); WORDS.SPELLS.forEach(sp => sp.words.forEach(w => WORDS.tiles(w).forEach(t => set.add(t)))); return [...set].sort((a, b) => (WORDS.VOWELS.includes(b) - WORDS.VOWELS.includes(a)) || a.localeCompare(b)); }
+  function drawRecorder() {
+    const el = $('recorder'); el.innerHTML = '';
+    if (!window.MediaRecorder || !navigator.mediaDevices) { el.textContent = 'This browser can\'t record sounds.'; return; }
+    soundList().forEach(t => {
+      const row = document.createElement('div'); row.className = 'recrow';
+      const lab = document.createElement('span'); lab.className = 'reclab'; lab.textContent = t; const hint = document.createElement('small'); hint.textContent = ' as in ' + WORDS.SOUNDS[t].key; lab.appendChild(hint);
+      const rec = document.createElement('button'); rec.type = 'button'; rec.textContent = RECS[t] ? '● Redo' : '● Record';
+      const play = document.createElement('button'); play.type = 'button'; play.textContent = '▶'; play.setAttribute('aria-label', 'Play ' + t); play.disabled = !RECS[t];
+      const del = document.createElement('button'); del.type = 'button'; del.textContent = '✕'; del.setAttribute('aria-label', 'Delete recording ' + t); del.disabled = !RECS[t];
+      play.addEventListener('click', () => playRec(t));
+      del.addEventListener('click', async () => { try { await dbDo('readwrite', os => os.delete(t)); } catch (e) {} delete RECS[t]; drawRecorder(); });
+      rec.addEventListener('click', async () => {
+        if (mediaRec) return;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true }), chunks = [];
+          mediaRec = new MediaRecorder(stream); rec.textContent = '● Recording…'; rec.classList.add('on');
+          mediaRec.ondataavailable = e => chunks.push(e.data);
+          mediaRec.onstop = async () => {
+            stream.getTracks().forEach(x => x.stop()); const blob = new Blob(chunks, { type: mediaRec.mimeType || 'audio/webm' }); mediaRec = null;
+            try { await dbDo('readwrite', os => os.put(blob, t)); } catch (e) {}
+            if (RECS[t]) URL.revokeObjectURL(RECS[t]); RECS[t] = URL.createObjectURL(blob); drawRecorder(); playRec(t);
+          };
+          mediaRec.start(); setTimeout(() => { if (mediaRec && mediaRec.state === 'recording') mediaRec.stop(); }, 1600);
+        } catch (e) { mediaRec = null; rec.textContent = 'Mic blocked'; }
+      });
+      row.append(lab, rec, play, del); el.appendChild(row);
+    });
+  }
   $('allowToday').addEventListener('click', () => { save.allowDate = today(); persist(); $('allowToday').textContent = 'Next power unlocked for today'; });
   $('closeSet').addEventListener('click', () => { setEl.hidden = true; resetBtn.dataset.arm = ''; resetBtn.textContent = 'Start over'; });
   function drawVoices() {
@@ -1242,6 +1514,13 @@ body.spelling .talk { display: none; }
   function drawProgress() {
     const el = $('progress'); el.innerHTML = '';
     const head = document.createElement('p'); head.textContent = save.companion ? 'Powers awake: ' + save.powers.length + ' of ' + CONFIG.powerSlots + (save.powers.length ? ' (' + save.powers.join(', ') + ')' : '') + '. Snowy path cleared: ' + save.fogStage + ' of 3.' : 'No companion chosen yet.'; el.appendChild(head);
+    const map = document.createElement('div'); map.className = 'skillmap';
+    const addGroup = (title, items) => { const h = document.createElement('p'); h.className = 'maphead'; h.textContent = title; map.appendChild(h); const row = document.createElement('div'); row.className = 'chips'; items.forEach(([id, label]) => { const c = document.createElement('span'); const stt = SK.state(id); c.className = 'chip ' + stt; c.textContent = label + (SK.isDue(id) ? ' •' : ''); c.title = stt + (SK.isDue(id) ? ', due for review' : ''); row.appendChild(c); }); map.appendChild(row); };
+    addGroup('Words', WORDS.SPELLS.flatMap(x => x.words).map(w => ['w:' + w, w]));
+    addGroup('Number bonds to 10', EASY.slice().sort((a, b) => a - b).map(k => ['b:' + k, k + ' + ' + (10 - k)]));
+    const key = document.createElement('p'); key.className = 'mapkey'; key.textContent = 'Grey: not started · Amber: learning · Green: mastered (answered alone on 2 separate days) · • due for review'; map.appendChild(key);
+    const dd = daily(); const td = document.createElement('p'); td.textContent = 'Today: ' + dd.words.length + ' words read, ' + dd.bonds + ' number bonds, ' + dd.lanterns + ' lantern' + (dd.lanterns === 1 ? '' : 's') + ' lit. Wishing Tree: ' + save.lit + ' of 10.'; map.appendChild(td);
+    el.appendChild(map);
     const words = {}, sounds = {};
     save.log.forEach(e => {
       const w = words[e.w] || (words[e.w] = { read: 0, picked: 0, helped: 0, missed: 0, heard: [] });
