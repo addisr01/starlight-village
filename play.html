@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#150f36">
 <title>Starlight Village</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
   --page: #120d26; --ink: #f1eaff; --soft: #b7a8e2; --plate: #1d1640; --edge: #3b2e6e; --focus: #ffe27a; --btn: #2a2058; }
@@ -84,6 +84,18 @@ body.spelling .talk { display: none; }
 .chip.learning { border-color: #e0a33a; color: var(--ink); background: rgba(224, 163, 58, 0.18); }
 .chip.mastered { border-color: #2f9e6e; color: var(--ink); background: rgba(47, 158, 110, 0.22); }
 .mapkey { font-size: 0.85rem; }
+.other { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.other span { color: var(--soft); font-size: 1rem; }
+.spell .other button { font-size: 1.1rem; min-height: 50px; }
+.other.nudge button { border-color: #ffe27a; box-shadow: 0 0 0 3px rgba(255, 226, 122, 0.55); animation: glowp 1.6s ease-in-out infinite; }
+.build { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.slots-row { display: flex; gap: 8px; }
+.slotbox { min-width: 1.4em; min-height: 1.2em; font-size: clamp(2.4rem, 10vw, 4rem); line-height: 1; font-weight: 600; padding: 8px 10px 12px; border: 4px dashed #6a5aa8; border-radius: 12px; color: #2a1d4a; text-align: center; }
+.slotbox.filled { border-style: solid; border-color: #2b1d45; background: #fff7e8; }
+.pool { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.pool .tile { font-size: clamp(2rem, 8vw, 3rem); }
+.tile.used { visibility: hidden; }
+.tile.shake { animation: nope 0.4s ease; }
 .grownup span { color: var(--soft); font-size: 1rem; }
 .grownup button { font-size: 1.05rem !important; min-height: 48px !important; }
 .tile:focus-visible, .spell button:focus-visible, .slot:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -96,7 +108,20 @@ body.spelling .talk { display: none; }
 .start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(18, 13, 38, 0.35); }
 .start button { font: inherit; font-size: clamp(1.4rem, 4vw, 2.2rem); color: #10233a; background: #ffe27a; border: 4px solid #2b1d45; border-radius: 14px; padding: 14px 34px; box-shadow: 0 5px 0 #2b1d45; cursor: pointer; }
 .talk { width: min(100%, 900px); min-height: 150px; background: var(--plate); border: 3px solid var(--edge); border-radius: 12px; padding: 10px 14px; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: start; }
-.start[hidden], .hud[hidden] { display: none; }
+.start[hidden], .hud[hidden], .goal[hidden] { display: none; }
+.goal { pointer-events: auto; margin-right: 52px; font: inherit; font-size: clamp(0.85rem, 2.2vw, 1.15rem); color: #10233a; background: #ffe27a; border: 2px solid #2b1d45; border-radius: 8px; padding: 3px 10px; min-height: 36px; cursor: pointer; max-width: 46%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; touch-action: manipulation; }
+.goal.pop { animation: goalpop 0.9s ease 2; }
+@keyframes goalpop { 40% { transform: scale(1.12); } }
+.goal:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; }
+.slot.awake.empty { filter: grayscale(0.6) brightness(0.75); opacity: 0.55; animation: none; cursor: pointer; outline: 2px dashed rgba(255, 255, 255, 0.55); outline-offset: -2px; border-radius: 6px; }
+/* Andika: a typeface made for children learning to read (clear 2, 5, a, g) */
+.line, .spell-msg, .choice, .tile, .num, .slotbox, .reclab { font-family: "Andika", "Pixelify Sans", ui-rounded, system-ui, sans-serif !important; }
+.tile, .num, .slotbox { font-weight: 700 !important; }
+.tenframe .cell.on.bun { background: radial-gradient(circle at 40% 35%, #fff4d6 0 14%, #f0c27a 18% 52%, #b9783a 56% 62%, #2a2058 66%); border-color: #f0c27a; animation: none; }
+.tenframe .cell.on.toy { background: radial-gradient(circle at 40% 35%, #ffe0ef 0 14%, #ff7fb6 18% 56%, #2a2058 62%); border-color: #ff7fb6; animation: none; }
+.tenframe .cell.on.toy.new { background: radial-gradient(circle at 40% 35%, #e6f4ff 0 14%, #86c3f2 18% 56%, #2a2058 62%); border-color: #86c3f2; }
+.tenframe .cell.on.gone { opacity: 0.4; background-image: linear-gradient(45deg, transparent 44%, #ffffff 44% 56%, transparent 56%), linear-gradient(-45deg, transparent 44%, #ffffff 44% 56%, transparent 56%); background-color: #2a2058; }
+.tenframe .cell.count { box-shadow: 0 0 0 4px #ffe27a; }
 .talk[hidden] { display: grid; visibility: hidden; }
 .who { grid-column: 1 / -1; color: var(--soft); font-size: 1rem; font-weight: 600; min-height: 1.2em; }
 .line { margin: 0; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.35; cursor: pointer; }
@@ -123,7 +148,7 @@ body.spelling .talk { display: none; }
 <div class="app">
   <div class="stage">
     <canvas id="scene" width="256" height="144" aria-label="Starlight Village game"></canvas>
-    <div class="hud" id="hud" hidden><span class="chip" id="compChip"></span><span class="slots" id="slots" role="img"></span></div>
+    <div class="hud" id="hud" hidden><span class="chip" id="compChip"></span><span class="slots" id="slots" role="img"></span><button type="button" class="goal" id="goal" hidden aria-label="What to do next">💡 <span id="goalText"></span></button></div>
     <button class="gear" id="gear" type="button" aria-label="Grown-up settings">⚙︎</button>
     <div class="start" id="start"><button type="button" id="startBtn">▶ Play</button></div>
   </div>
@@ -136,7 +161,9 @@ body.spelling .talk { display: none; }
   <section class="spell" id="spell" hidden aria-live="polite">
     <p class="spell-msg" id="spellMsg"></p>
     <div class="spell-main"><div class="tiles" id="tiles"></div><canvas id="pic" width="16" height="16" hidden aria-hidden="true"></canvas></div>
-    <div class="spell-btns"><button type="button" id="spellAgain" aria-label="Hear it again">🔊</button><button type="button" class="mic" id="micBtn" data-on="false">🎤 Read it!</button><button type="button" id="helpBtn" hidden>💡 Help</button><button type="button" id="picBtn" hidden>🖼 Pictures</button></div>
+    <div class="spell-btns"><button type="button" id="spellAgain" aria-label="Hear it again">🔊</button><button type="button" class="mic" id="micBtn" data-on="false">🎤 Read it!</button><button type="button" id="helpBtn" hidden>💡 Help</button></div>
+    <div class="other" id="otherWays"><span>Other ways:</span><button type="button" id="picBtn">🖼 Pictures</button><button type="button" id="buildBtn">🔤 Build it</button></div>
+    <div class="build" id="build" hidden></div>
     <div class="pics" id="pics" hidden></div>
     <div class="grownup" id="grownup" hidden><span>Grown-up:</span><button type="button" id="gOk">✓ Read it</button><button type="button" id="gSkip">Skip word</button></div>
   </section>
@@ -432,7 +459,7 @@ body.spelling .talk { display: none; }
   'use strict';
   const PX = root.PX || (typeof require !== 'undefined' ? require('./engine.js') : null);
   const { W, H, CREATURES, Sprite, pack, mix, hash, BAYER, SKY, OUT } = PX;
-  const WW = 1344; // world width in pixels (5.25 screens)
+  const WW = 1536; // world width in pixels (6 screens)
   const FEET = 128; // ground line where characters stand
 
   // ---------- Simple drawing surface ----------
@@ -599,6 +626,13 @@ body.spelling .talk { display: none; }
   w.ellipse(GX, 52, 6, 6, OUT); w.ellipse(GX, 52, 5, 5, '#6a4fa8');
   [[0, -3], [0, 3], [-3, 0], [3, 0], [0, 0], [-2, -2], [2, 2], [-2, 2], [2, -2]].forEach(([dx, dy]) => w.set(GX + dx, 52 + dy, '#ffffff'));
 
+  // beyond the gate: snowy stairs up to Owl Village
+  for (let k = 0; k < 11; k++) { const sx = 1372 + k * 11, sy = 117 - k * 5; w.rect(sx - 1, sy - 1, 13, 136 - sy, OUT); w.rect(sx, sy, 11, 136 - sy, '#dfe7fb'); w.rect(sx, sy, 11, 2, '#ffffff'); w.rect(sx, sy + 2, 11, 1, '#b7c3e8'); }
+  [[1500, 54, '#ffd66e'], [1522, 44, '#ffb3da'], [1478, 40, '#b9e2ff']].forEach(([hx, hy, lc]) => {
+    w.ellipse(hx, hy, 9, 8, OUT); w.ellipse(hx, hy, 8, 7, '#8c6448'); w.poly([[hx - 11, hy - 4], [hx, hy - 15], [hx + 11, hy - 4]], OUT); w.poly([[hx - 9, hy - 5], [hx, hy - 13.5], [hx + 9, hy - 5]], '#eef3ff');
+    w.ellipse(hx, hy + 1, 3, 3.5, OUT); w.ellipse(hx, hy + 1, 2, 2.5, lc);
+  });
+
   // ---------- Pip, the little snow owl ----------
   function pipOwl(mood) {
     const s = new Sprite(32, 32), Wt = '#f7faff', Wg = '#dfe8fb', Ey = '#2a1a4a';
@@ -632,12 +666,13 @@ body.spelling .talk { display: none; }
     const list = BASE_SPOTS.slice(), fx = s.fogX;
     if (fx > 830) list.push({ id: 'snowman', x0: 786, x1: 816, y0: 76, y1: 116, stand: 770 });
     if (fx > 1050 && s.pip && !s.pip.follow) list.push({ id: 'pip', x0: s.pip.x - 16, x1: s.pip.x + 16, y0: 90, y1: 132, stand: s.pip.x - 34 });
-    if (fx > 1300) list.push({ id: 'gate', x0: 1236, x1: 1308, y0: 36, y1: 130, stand: 1250 });
+    if (s.gateOpen) list.push({ id: 'stairs', x0: 1340, x1: WW, y0: 20, y1: 144, stand: 1356 });
+    else if (fx > 1300) list.push({ id: 'gate', x0: 1236, x1: 1308, y0: 36, y1: 130, stand: 1250 });
     else list.push({ id: 'fog', x0: fx - 34, x1: WW, y0: 30, y1: 144, stand: fx - 12 });
     return list;
   }
   const MIN_X = 28;
-  const maxX = s => Math.min(s.fogX > 1300 ? 1250 : s.fogX - 12, WW - 30);
+  const maxX = s => s.gateOpen ? 1356 : Math.min(s.fogX > 1300 ? 1250 : s.fogX - 12, WW - 30);
 
   // ---------- Dynamic render ----------
   const STARS = Array.from({ length: 70 }, (_, k) => ({ x: Math.floor(hash(k, 1) * W), y: Math.floor(hash(k, 2) * 70), p: hash(k, 5) * 200, big: hash(k, 6) > 0.85 }));
@@ -657,8 +692,13 @@ body.spelling .talk { display: none; }
       for (let y = -4; y < 9; y++) for (let x = -5; x < 6; x++) { const d = Math.hypot(x, y - 2); if (d > 3 && d < 6 && dith(lx + x, ly + y + (fl ? 1 : 0)) < (6 - d) / 7) { const X = sx + x, Y = ly + y; if (X >= 0 && X < W && Y >= 0 && Y < H) buf[Y * W + X] = pack(mix(c, '#2a1f5a', 0.35)); } }
       for (let y = 1; y < 4; y++) for (let x = -1; x < 2; x++) { const X = sx + x, Y = ly + y; if (X >= 0 && X < W) buf[Y * W + X] = pack(y === 1 && x === -1 ? '#ffffff' : c); }
     });
+    // frozen ice sheet filling the Frost Gate until it opens
+    if (!s.gateOpen) for (let y = 62; y < 118; y++) for (let x = 1253; x < 1291; x++) {
+      const sx = x - cam; if (sx < 0 || sx >= W) continue; const d = dith(x, y);
+      if (d < 0.75) buf[y * W + sx] = pack((x * 3 + y + (t >> 2)) % 29 === 0 ? '#ffffff' : d < 0.35 ? '#cfe9ff' : '#a9d4ff');
+    }
     // fog wall (moves back as powers clear it)
-    const fx0 = s.fogX;
+    const fx0 = s.gateOpen ? WW + 100 : s.fogX;
     for (let y = 30; y < 140; y++) for (let x = Math.max(cam, Math.floor(fx0)); x < Math.min(WW, cam + W); x++) {
       const sx = x - cam;
       const dens = Math.min(0.94, (x - fx0) / 50) * (1 - Math.max(0, (y - 128) / 12)) * (1 - Math.max(0, (46 - y) / 16)) + Math.sin((y + t * 0.6) / 7 + x / 11) * 0.12;
@@ -689,6 +729,12 @@ body.spelling .talk { display: none; }
     if (s.comp.walking) { const mx = s.comp.tx - cam, ph = (t >> 2) % 2; put(mx, FEET + 2, '#ffe27a'); if (ph) { put(mx - 2, FEET + 2, '#fff3c4'); put(mx + 2, FEET + 2, '#fff3c4'); put(mx, FEET, '#fff3c4'); put(mx, FEET + 4, '#fff3c4'); } }
     s.parts = (s.parts || []).filter(p => p.life > 0);
     s.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--; if (p.life % 4 < 3) put(p.x - cam, p.y, p.col); });
+    if (s.guide && s.guide.until > t) {
+      const gx = s.guide.x - cam, onScreen = gx > 8 && gx < W - 8, bob = Math.round(Math.abs(Math.sin(t / 5)) * 4);
+      const draw = (rows, ox, oy) => rows.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === '.') return; const X = ox + xx, Y = oy + yy; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = pack(ch === 'X' ? '#2b1d45' : ch === 'o' ? '#ffffff' : '#ffe27a'); }));
+      if (onScreen) draw(['XXXXXXXXX', 'XyoyyyyyX', '.XyyyyyX.', '..XyyyX..', '...XyX...', '....X....'], Math.round(gx) - 4, (s.guide.y || 40) + bob);
+      else { const R = ['XX.....', 'XyXX...', 'XoyyXX.', 'XyyyyyX', 'XyyyXX.', 'XyXX...', 'XX.....']; if (gx >= W - 8) draw(R, W - 10 - bob, 66); else draw(R.map(r => [...r].reverse().join('')), 3 + bob, 66); }
+    }
     FLIES.forEach(fl => { const x = fl.x + Math.sin((t + fl.p) / 40) * 10 - cam, y = fl.y + Math.sin((t + fl.p) / 27) * 4; if (Math.sin((t + fl.p) / 13) > 0) { put(x, y, '#fff3a0'); put(x + 1, y, '#c8b85a'); } });
   }
 
@@ -820,12 +866,15 @@ body.spelling .talk { display: none; }
 
   // ---------- Save ----------
   const SAVE_KEY = 'starlight.save.v1';
-  const fresh = () => ({ v: 1, companion: null, metSpot: false, powers: [], visits: 0, started: new Date().toISOString(), lastPowerDate: null, allowDate: null, log: [], fogStage: 0, charged: true, pipFriend: false, emo: [], skills: null, lit: 0, lastLanternDate: null, treeIntro: false, warmupDate: null, sessionMin: 15, daily: null });
+  const fresh = () => ({ v: 1, companion: null, metSpot: false, powers: [], visits: 0, started: new Date().toISOString(), lastPowerDate: null, allowDate: null, log: [], fogStage: 0, charged: true, pipFriend: false, emo: [], skills: null, lit: 0, lastLanternDate: null, treeIntro: false, warmupDate: null, sessionMin: 15, daily: null, powerCharge: null, keyQuest: false, keyParts: {}, gateOpen: false, emptyTip: false });
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   let save = fresh();
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.v === 1) save = Object.assign(fresh(), s); } catch (e) {}
   const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
   if (!save.skills) save.skills = SKILLS.fromLog(save.log || [], {});
+  if (!Array.isArray(save.powerCharge)) save.powerCharge = save.powers.map(() => save.charged !== false);
+  while (save.powerCharge.length < save.powers.length) save.powerCharge.push(true);
+  if (!save.keyParts) save.keyParts = {};
   const SK = SKILLS.create(save.skills, today);
   function daily() { if (!save.daily || save.daily.date !== today()) save.daily = { date: today(), words: [], bonds: 0, lanterns: 0 }; return save.daily; }
 
@@ -906,7 +955,7 @@ body.spelling .talk { display: none; }
       options.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.textContent = o; b.addEventListener('click', () => res(i)); choicesEl.appendChild(b); });
     });
   }
-  function endTalk() { talking = false; talkEl.hidden = true; choicesEl.innerHTML = ''; if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  function endTalk() { talking = false; talkEl.hidden = true; choicesEl.innerHTML = ''; if (save.companion) refreshGoal(); if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
   againBtn.addEventListener('click', () => speak(lastLine));
 
   // ---------- HUD ----------
@@ -916,17 +965,51 @@ body.spelling .talk { display: none; }
     hudEl.hidden = false; compChip.textContent = c.name;
     slotsEl.innerHTML = '';
     for (let i = 0; i < CONFIG.powerSlots; i++) {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'slot' + (save.powers[i] ? ' awake' : ''); b.textContent = p.icon;
-      b.setAttribute('aria-label', save.powers[i] ? 'Use ' + save.powers[i] : 'Sleeping power'); b.disabled = !save.powers[i];
+      const full = !!save.powers[i] && save.powerCharge[i];
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'slot' + (save.powers[i] ? ' awake' : '') + (save.powers[i] && !full ? ' empty' : ''); b.textContent = p.icon;
+      b.setAttribute('aria-label', !save.powers[i] ? 'Sleeping power' : full ? 'Use ' + save.powers[i] : save.powers[i] + ' is empty. Tap to recharge'); b.disabled = !save.powers[i];
       if (save.powers[i]) b.addEventListener('click', () => castPower(i));
       slotsEl.appendChild(b);
     }
     st.powersN = save.powers.length;
-    
+    refreshGoal();
   }
 
+  // ---------- What to do next ----------
+  const KEYS = [{ id: 'tree', name: 'the Wishing Tree', x: 431, y: 18 }, { id: 'bakery', name: 'the Moon Bakery', x: 575, y: 30 }, { id: 'home', name: 'our home', x: 76, y: 30 }];
+  const keyCount = () => KEYS.filter(k => save.keyParts[k.id]).length;
+  function goal() {
+    if (!save.companion) return null;
+    const P = save.powers.length, S = CONFIG.petName, kind = POWERS[save.companion].kind;
+    const spotReady = !(save.lastPowerDate === today() && save.allowDate !== today());
+    if (!save.metSpot) return { text: 'Say hello to ' + S, x: V.SPOT_X, y: 62, say: 'Let\'s go and say hello to ' + S + '! He\'s the wise old cat with the glasses.' };
+    if (P === 0) return { text: 'Wake your first power', x: V.SPOT_X, y: 62, say: S + ' can help us wake my very first ' + kind + ' power! Let\'s go and see him.' };
+    if (save.fogStage < 3) return { text: 'Clear the snowy fog', x: st.fogX + 6, y: 56, say: 'Let\'s walk past the bakery to the snowy fog, and use my powers to clear it!' };
+    if (!save.pipFriend) return { text: 'Help the lost owl', x: st.pip.x, y: 72, say: 'Someone is crying near the frozen pond. Let\'s go and see if they need help!' };
+    if (save.gateOpen) return { text: 'Owl Village: coming soon!', x: 1400, y: 40, say: 'Pip\'s home is up those snowy stairs! The next part of our adventure is coming very soon.' };
+    if (!save.keyQuest) return { text: 'Go to the Frost Gate', x: 1272, y: 24, say: 'Let\'s take Pip to the big icy gate at the end of the snowy path!' };
+    const next = KEYS.find(k => !save.keyParts[k.id]);
+    if (next) return { text: 'Key pieces ' + keyCount() + '/3', x: next.x, y: next.y, say: 'Let\'s find the next piece of the Snowflake Key. It\'s hidden at ' + next.name + '!' };
+    if (P < 4) return spotReady ? { text: 'Wake your next power', x: V.SPOT_X, y: 62, say: 'We have the whole key! Now we need all four powers. Let\'s ask ' + S + ' to wake the next one!' }
+      : { text: 'Next power tomorrow', x: 431, y: 18, say: 'We have the whole key! We just need one more power, and ' + S + ' will help us tomorrow. Today we could light a lantern at the Wishing Tree!' };
+    return { text: 'Open the Frost Gate!', x: 1272, y: 24, say: 'We have the whole Snowflake Key and all four powers! Let\'s go and open the Frost Gate!' };
+  }
+  let goalText = '';
+  function showGuide() { const g = goal(); if (g && g.x != null) st.guide = { x: g.x, y: g.y, until: st.t + 330 }; }
+  function refreshGoal() {
+    const g = goal(), el = $('goal');
+    if (!g) { el.hidden = true; return; }
+    el.hidden = false; $('goalText').textContent = g.text;
+    if (g.text !== goalText) { const changed = goalText !== ''; goalText = g.text; if (changed && st.mode === 'village') { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); showGuide(); } }
+  }
+  $('goal').addEventListener('click', async () => {
+    if (talking || st.spelling || st.scene || st.mode !== 'village') return;
+    const g = goal(); if (!g) return;
+    showGuide(); await talk(compInfo().name, g.say); endTalk(); showGuide();
+  });
+
   // ---------- Game state ----------
-  const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null, pops: [], spelling: false, powersN: save.powers.length, fx: [], lit: save.lit, sleepy: false, sessionStart: 0, fogX: V.FOG_STOPS[save.fogStage], pip: { x: 1010, mood: save.pipFriend ? 'happy' : 'scared', follow: save.pipFriend, moving: false } };
+  const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null, pops: [], spelling: false, powersN: save.powers.length, fx: [], lit: save.lit, guide: null, scene: false, gateOpen: save.gateOpen, sleepy: false, sessionStart: 0, fogX: V.FOG_STOPS[save.fogStage], pip: { x: 1010, mood: save.pipFriend ? 'happy' : 'scared', follow: save.pipFriend, moving: false } };
   const compInfo = () => CREATURES.find(x => x.id === save.companion);
 
   async function begin() {
@@ -990,9 +1073,11 @@ body.spelling .talk { display: none; }
         save.metSpot = true; st.metSpot = true; persist(); chime([659, 784, 988]);
         V.sparkle(st, V.SPOT_X, 100, ['#ffe27a', '#ffffff', '#ff9fcf']);
       }
-      if (n >= WORDS.SPELLS.length) { await talk(S, 'You have woken every power I know about! I\'m working on some new ones for you.'); endTalk(); return; }
+      if (n >= WORDS.SPELLS.length) { await talk(S, 'You have woken all four of ' + c.name + '\'s powers! I\'m so proud of you.'); const g = goal(); if (g) await talk(S, 'Here\'s what to do next. ' + g.say.replace(/^Let's/, 'Why not')); endTalk(); showGuide(); return; }
       if (save.lastPowerDate === today() && save.allowDate !== today()) {
-        await talk(S, 'Powers need a good sleep to grow strong. Come back tomorrow, and we\'ll wake your next power!'); endTalk(); return;
+        await talk(S, 'Powers need a good sleep to grow strong. Come back tomorrow, and we\'ll wake your next power!');
+        const g = goal(); if (g && g.x !== V.SPOT_X) { await talk(S, 'While you wait, tap the light bulb at the top to see what else to do.'); }
+        endTalk(); showGuide(); return;
       }
       const yes = await ask(S, n === 0 ? 'Would you like to wake your very first power?' : 'Would you like to wake your next power? It\'s called ' + p.names[n] + '!', ['Yes!', 'Not yet']);
       if (yes !== 0) { await talk(S, 'That\'s alright. I\'ll be right here when you\'re ready.'); endTalk(); return; }
@@ -1000,9 +1085,26 @@ body.spelling .talk { display: none; }
       endTalk();
       runSpell(n);
     },
-    async home() { const c = compInfo(); await talk(c.name, 'This is our cosy home! One day we can decorate it however we like.'); endTalk(); },
+    async home() {
+      const c = compInfo(); st.comp.face = 1;
+      if (save.keyQuest && !save.keyParts.home) {
+        await talk(c.name, 'Look! Something is sparkling inside our toy box. It\'s a piece of the Snowflake Key!');
+        if (save.pipFriend) await talk('Pip', 'The toy box is so messy! Let\'s tidy the toys so we can reach it.');
+        const a = await ask(c.name, 'Shall we count the toys to find the key piece?', ['Yes!', 'Later']); endTalk();
+        if (a === 0) runKeyPuzzle('home'); return;
+      }
+      await talk(c.name, 'This is our cosy home! One day we can decorate it however we like.');
+      if (save.keyParts.home) { const a = await ask(c.name, 'Shall we play with the toy box again?', ['Yes!', 'Not now']); endTalk(); if (a === 0) runStory('home', 2); return; }
+      endTalk();
+    },
     async tree() {
       const c = compInfo(); st.comp.face = 1;
+      if (save.keyQuest && !save.keyParts.tree) {
+        await talk(c.name, 'Look, way up in the branches! A piece of the Snowflake Key is caught in the Wishing Tree!');
+        await talk(c.name, 'The fireflies will fly it down if we fill two lanterns with ten fireflies each.');
+        const a = await ask(c.name, 'Shall we help the fireflies?', ['Yes!', 'Later']); endTalk();
+        if (a === 0) runKeyPuzzle('tree'); return;
+      }
       if (save.lit >= 10) { await talk(c.name, 'All ten lanterns are glowing! The Wishing Tree is ready to grant a wish...'); await talk(c.name, 'I wonder what we should wish for? Maybe something to open the Frost Gate!'); endTalk(); return; }
       if (!save.treeIntro) {
         await talk(c.name, 'This is the Wishing Tree! But look, most of its lanterns are dark.');
@@ -1014,13 +1116,24 @@ body.spelling .talk { display: none; }
       const a = await ask(c.name, 'Shall we catch fireflies to light a lantern?', ['Yes!', 'Later']);
       endTalk(); if (a === 0) runLantern();
     },
-    async bakery() { const c = compInfo(); await talk(c.name, 'Mmm, the Moon Bakery! It smells like warm bread. It opens in the morning.'); endTalk(); },
+    async bakery() {
+      const c = compInfo(); st.comp.face = 1;
+      if (save.keyQuest && !save.keyParts.bakery) {
+        await talk(c.name, 'Mmm, the Moon Bakery! And look, a piece of the Snowflake Key is on the top shelf!');
+        await talk('Baker Crumb', 'Hello, dears! I\'m so busy selling moon buns. Can you help me count what\'s left on my trays? Then I\'ll give you that sparkly key piece.');
+        const a = await ask(c.name, 'Shall we help Baker Crumb?', ['Yes!', 'Later']); endTalk();
+        if (a === 0) runKeyPuzzle('bakery'); return;
+      }
+      await talk(c.name, 'Mmm, the Moon Bakery! It smells like warm moon buns.');
+      if (save.keyParts.bakery) { const a = await ask('Baker Crumb', 'Back again, dears? Would you like to help me sell more moon buns?', ['Yes!', 'Not now']); endTalk(); if (a === 0) runStory('bakery', 2); return; }
+      endTalk();
+    },
     async fog() {
       const c = compInfo(), p = POWERS[c.id], n = save.powers.length; st.comp.face = 1;
       if (n === 0) { await talk(c.name, 'Brrr! It\'s all foggy. This is the path to Frosty Peaks.'); await talk(c.name, p.sniff); await talk(c.name, 'We need powers to clear the fog. Let\'s ask ' + CONFIG.petName + ' how to wake them!'); endTalk(); return; }
       if (save.fogStage === 0) await talk(c.name, 'Brrr! Snowy fog is blocking the path to Frosty Peaks.');
       else await talk(c.name, 'More snowy fog! Let\'s keep clearing the path.');
-      if (save.charged) { await talk(c.name, 'Let\'s use a power to clear it! Tap a glowing ' + p.kind + ' at the top of the screen.'); endTalk(); return; }
+      if (anyCharged()) { await talk(c.name, 'Let\'s use a power to clear it! Tap a glowing ' + p.kind + ' at the top of the screen.'); endTalk(); return; }
       await askRecharge(c);
     },
     async snowman() {
@@ -1059,15 +1172,37 @@ body.spelling .talk { display: none; }
       endTalk();
     },
     async gate() {
-      const c = compInfo(); st.comp.face = 1;
-      await talk(c.name, 'Wow! It\'s the Frost Gate. It\'s frozen shut!');
-      if (save.pipFriend) {
-        await talk('Pip', 'My home is on the other side! But look, the gate has a snowflake lock.');
-        await talk('Pip', 'My grandma says only a very special power can open it.');
-        await talk(c.name, 'We\'ll find that power, Pip. I promise! Let\'s keep reading and growing stronger.');
-      } else {
+      const c = compInfo(), S = CONFIG.petName; st.comp.face = 1;
+      if (!save.pipFriend) {
+        await talk(c.name, 'Wow! It\'s the Frost Gate. It\'s frozen shut!');
         await talk(c.name, 'I thought I heard a little voice back near the frozen pond. Maybe someone there needs our help?');
+        endTalk(); return;
       }
+      if (!save.keyQuest) {
+        await talk(c.name, 'Wow! It\'s the Frost Gate. It\'s frozen shut!');
+        await talk('Pip', 'My home is on the other side! Look, the gate has a snowflake-shaped lock.');
+        await talk('Pip', 'My grandma made a Snowflake Key to open it. But a big gust of wind blew the key into three pieces!');
+        await talk('Pip', 'One piece flew into the Wishing Tree. One landed at the Moon Bakery. And one fell down your chimney, into your home!');
+        await talk('Pip', 'If we find all three pieces, and all of your powers are awake, we can use a team power to open the gate!');
+        await talk(c.name, 'Let\'s find them, Pip! Tap the light bulb at the top if you forget where to go.');
+        save.keyQuest = true; persist(); endTalk(); showGuide(); return;
+      }
+      const n = keyCount();
+      if (n < 3) { const next = KEYS.find(k => !save.keyParts[k.id]); await talk('Pip', 'We have ' + n + ' of the 3 key pieces so far. The next one is at ' + next.name + '!'); endTalk(); showGuide(); return; }
+      if (save.powers.length < 4) {
+        await talk('Pip', 'We have the whole Snowflake Key! But the key needs lots of power to work.');
+        await talk('Pip', 'We need all four of ' + c.name + '\'s powers awake. ' + S + ' can help with that!');
+        endTalk(); showGuide(); return;
+      }
+      const a = await ask('Pip', 'We have the whole key and all four powers! Are you ready to use our team power?', ['Yes!', 'Not yet']);
+      if (a !== 0) { await talk('Pip', 'Okay! Come back when you\'re ready.'); endTalk(); return; }
+      endTalk(); openGate();
+    },
+    async stairs() {
+      const c = compInfo(); st.comp.face = 1;
+      await talk('Pip', 'These stairs go all the way up to Owl Village. That\'s where my grandma lives!');
+      await talk(c.name, 'The stairs are still covered in deep snow. The owls are sweeping them clear for us.');
+      await talk(c.name, 'Our next adventure, in Owl Village, is coming very soon!');
       endTalk();
     },
   };
@@ -1075,7 +1210,7 @@ body.spelling .talk { display: none; }
 
   // ---------- Word spells ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const picsEl = $('pics'), picBtn = $('picBtn');
+  const picsEl = $('pics'), picBtn = $('picBtn'), buildBtn = $('buildBtn'), otherEl = $('otherWays'), buildEl = $('build');
   const spellEl = $('spell'), msgEl = $('spellMsg'), tilesEl = $('tiles'), picEl = $('pic'), micBtn = $('micBtn'), helpBtn = $('helpBtn'), grownEl = $('grownup');
   let spellMsg = '';
   function sayMsg(t) { spellMsg = t; msgEl.textContent = t; speak(t); }
@@ -1085,7 +1220,7 @@ body.spelling .talk { display: none; }
     save.log.push(Object.assign({ d: today() }, e)); if (save.log.length > 600) save.log.splice(0, save.log.length - 600);
     const id = 'w:' + e.w;
     if (e.r === 'read') { SK.record(id, 'strong'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
-    else if (['picked', 'helped', 'grownup'].includes(e.r)) { SK.record(id, 'ok'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
+    else if (['picked', 'built', 'helped', 'grownup'].includes(e.r)) { SK.record(id, 'ok'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
     else if (['close', 'miss', 'pickmiss'].includes(e.r)) SK.record(id, 'miss');
     persist();
   }
@@ -1106,9 +1241,11 @@ body.spelling .talk { display: none; }
       let done = false; const fin = v => { if (!done) { done = true; res(v); } };
       try {
         if (canSpeak) speechSynthesis.cancel();
-        const r = new SR(); r.lang = 'en-AU'; r.interimResults = false; r.maxAlternatives = 5; r.continuous = false;
-        r.onresult = e => { const R = e.results[0], alts = []; for (let i = 0; i < R.length; i++) { const t = R[i].transcript.trim(); if (t) alts.push(t); } fin({ alts }); };
-        r.onerror = e => fin({ error: e.error, alts: [] }); r.onend = () => fin({ alts: [] });
+        const r = new SR(), heard = []; r.lang = 'en-AU'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+        const add = t => { t = (t || '').trim(); if (t && !heard.includes(t)) heard.push(t); };
+        r.onresult = e => { for (let k = 0; k < e.results.length; k++) { const R = e.results[k]; for (let i = 0; i < R.length; i++) add(R[i].transcript); } };
+        r.onerror = e => { if (heard.length) fin({ alts: heard.slice().reverse() }); else fin({ error: e.error, alts: [] }); };
+        r.onend = () => fin({ alts: heard.slice().reverse() });
         r.start(); setTimeout(() => { try { r.stop(); } catch (e) {} }, 7000);
       } catch (e) { fin({ error: 'start', alts: [] }); }
     });
@@ -1120,8 +1257,8 @@ body.spelling .talk { display: none; }
   }
   function spellWord(word, first, review) {
     return new Promise(resolve => {
-      const ts = WORDS.tiles(word); let misses = 0, helped = false, busy = false;
-      tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = !!SR; micBtn.hidden = !SR; picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = !!SR; $('spellAgain').hidden = false;
+      const ts = WORDS.tiles(word); let misses = 0, nones = 0, helped = false, busy = false;
+      tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = !!SR; micBtn.hidden = !SR; picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); buildEl.hidden = true; buildEl.innerHTML = ''; tilesEl.hidden = false; $('spellAgain').hidden = false;
       ts.forEach((t, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'tile' + (WORDS.VOWELS.includes(t) ? ' vowel' : ''); b.textContent = t;
         b.setAttribute('aria-label', 'Hear the sound ' + t);
@@ -1131,7 +1268,7 @@ body.spelling .talk { display: none; }
       sayMsg(first ? 'Tap each letter to hear its sound. Then tap the microphone, and read the word out loud!' : review ? 'Do you remember this word? Read it out loud!' : SR ? 'Read this word out loud!' : 'Read this word! Then tap Pictures to find it, or read it to a grown-up.');
       const finish = async (r) => {
         if (busy) return; busy = true;
-        grownEl.hidden = true; helpBtn.hidden = true; micBtn.disabled = true; picBtn.hidden = true; picsEl.hidden = true;
+        grownEl.hidden = true; helpBtn.hidden = true; micBtn.disabled = true; otherEl.hidden = true; picsEl.hidden = true; buildEl.hidden = true; tilesEl.hidden = false;
         if (r === 'skip') { logTry({ w: word, r: 'skip' }); sayMsg('That\'s okay! We\'ll try that one another day.'); await wait(1600); micBtn.disabled = false; resolve(false); return; }
         logTry({ w: word, r: r });
         drawPic(word); tilesEl.classList.add('win'); setTimeout(() => tilesEl.classList.remove('win'), 700);
@@ -1150,7 +1287,7 @@ body.spelling .talk { display: none; }
         if (res.error === 'not-allowed' || res.error === 'service-not-allowed') { sayMsg('I can\'t use the microphone. Read it to a grown-up instead!'); grownEl.hidden = false; return; }
         const c = classify(word, res.alts);
         if (c.r === 'read') { finish(helped ? 'helped' : 'read'); return; }
-        if (c.r === 'none') { sayMsg('I didn\'t hear you. Tap the microphone and read it nice and loud!'); return; }
+        if (c.r === 'none') { nones++; sayMsg('My ears didn\'t catch that! Try again, or pick another way.'); otherEl.classList.add('nudge'); if (nones >= 2) grownEl.hidden = false; return; }
         misses++;
         if (c.r === 'close') {
           const ti = tileAt(word, c.at), t = ts[ti], where = ti === 0 ? 'first' : ti === ts.length - 1 ? 'last' : 'middle';
@@ -1162,7 +1299,7 @@ body.spelling .talk { display: none; }
           logTry({ w: word, r: 'miss', h: c.heard });
           sayMsg((c.heard ? 'Hmm, I heard ' + c.heard + '. ' : '') + 'Let\'s try again! Tap the letters to hear their sounds.');
         }
-        helpBtn.hidden = false; picBtn.hidden = false;
+        helpBtn.hidden = false; otherEl.classList.add('nudge');
         if (misses >= 2) grownEl.hidden = false;
       };
       helpBtn.onclick = () => {
@@ -1174,7 +1311,7 @@ body.spelling .talk { display: none; }
       };
       picBtn.onclick = () => {
         if (busy) return;
-        micBtn.hidden = true; helpBtn.hidden = true; picBtn.hidden = true; grownEl.hidden = true; picsEl.hidden = false; picsEl.innerHTML = '';
+        micBtn.hidden = true; helpBtn.hidden = true; otherEl.hidden = true; grownEl.hidden = true; picsEl.hidden = false; picsEl.innerHTML = '';
         spellMsg = 'Read the word. Which picture is it?'; msgEl.textContent = spellMsg; speak(spellMsg);
         const opts = [word].concat(distractors(word, 2)).sort(() => Math.random() - 0.5); let wrong = 0;
         opts.forEach(o => {
@@ -1190,6 +1327,33 @@ body.spelling .talk { display: none; }
           });
           picsEl.appendChild(b);
         });
+      };
+      buildBtn.onclick = async () => {
+        if (busy) return;
+        micBtn.hidden = true; helpBtn.hidden = true; otherEl.hidden = true; grownEl.hidden = true; tilesEl.hidden = true; buildEl.hidden = false; buildEl.innerHTML = '';
+        drawPic(word);
+        const slots = document.createElement('div'); slots.className = 'slots-row';
+        ts.forEach(() => { const d = document.createElement('div'); d.className = 'slotbox'; slots.appendChild(d); });
+        const pool = document.createElement('div'); pool.className = 'pool';
+        const extras = 'abcdefghijklmnoprstuwz'.split('').filter(x => !ts.includes(x)).sort(() => Math.random() - 0.5).slice(0, 2);
+        const opts = ts.map((t, i) => ({ t, i })).concat(extras.map(t => ({ t, i: -1 }))).sort(() => Math.random() - 0.5);
+        let next = 0, wrong = 0;
+        opts.forEach(o => {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'tile' + (WORDS.VOWELS.includes(o.t) ? ' vowel' : ''); b.textContent = o.t; b.setAttribute('aria-label', 'Letter ' + o.t);
+          b.addEventListener('click', async () => {
+            if (busy || b.disabled) return;
+            if (o.t === ts[next]) {
+              b.disabled = true; b.classList.add('used'); slots.children[next].textContent = o.t; slots.children[next].classList.add('filled'); next++; playSound(o.t);
+              if (next === ts.length) { await wait(700); finish(helped || wrong >= 3 ? 'helped' : 'built'); }
+            } else {
+              wrong++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); chime([330, 262], 'sine');
+              await playSound(o.t); msgEl.textContent = 'Listen for the next sound...'; await wait(200); await playSound(ts[next]);
+            }
+          });
+          pool.appendChild(b);
+        });
+        buildEl.append(slots, pool);
+        spellMsg = 'Build the word ' + word + '! Tap the letters in order.'; msgEl.textContent = 'Build the word! Tap the letters in order.'; speak(spellMsg);
       };
       if (!SR) grownEl.hidden = false;
       $('gOk').onclick = () => finish(helped ? 'helped' : 'grownup');
@@ -1210,28 +1374,32 @@ body.spelling .talk { display: none; }
     spellEl.hidden = true; document.body.classList.remove('spelling'); st.spelling = false;
     return read;
   }
+  const anyCharged = () => save.powerCharge.some(Boolean);
   async function askRecharge(c) {
-    const a = await ask(c.name, 'My power is all used up. Shall we read two words to recharge it?', ['Yes!', 'Later']);
-    if (a !== 0) { await talk(c.name, 'Okay! Tap the fog when you\'re ready to recharge.'); endTalk(); return; }
+    const a = await ask(c.name, 'My power is empty. Shall we read two words to fill my powers back up?', ['Yes!', 'Later']);
+    if (a !== 0) { await talk(c.name, 'Okay! Tap an empty ' + POWERS[c.id].kind + ' at the top whenever you\'re ready.'); endTalk(); return; }
     endTalk();
     await runWords(weakest(learnedWords(), 2).map(w => ({ w, review: true })));
-    save.charged = true; persist();
+    save.powerCharge = save.powers.map(() => true); persist(); drawHud();
     chime([523, 659, 784, 1046]); for (let k = 0; k < 3; k++) setTimeout(() => V.sparkle(st, st.comp.x, WORLD_Y(), POWERS[c.id].cols, 24), k * 200);
-    await talk(c.name, 'I feel it! My power is full again. Tap a power to clear more fog!');
+    const nearFog = save.fogStage < 3 && st.comp.x > st.fogX - 80;
+    await talk(c.name, 'I feel it! All my powers are full again!' + (nearFog ? ' Tap a power to clear more fog!' : ''));
     endTalk();
   }
   async function clearFog() {
     const c = compInfo();
-    save.fogStage++; save.charged = false; persist();
+    save.fogStage++; persist(); st.comp.tx = st.comp.x; st.comp.walking = false; st.arrive = null;
     chime([392, 523, 659, 784, 1046, 1318]);
-    await wait(1200);
+    st.scene = true; await wait(1200); st.scene = false;
     const lines = [
       ['It worked! The snowy fog is melting away!', 'Look, there\'s a snowman up ahead!'],
       ['Wow, my power is getting stronger!', 'Is that a frozen pond? I think I can hear someone crying...'],
       ['The whole path is clear!', 'Look at that giant icy gate!'],
     ][save.fogStage - 1];
     for (const l of lines) await talk(c.name, l);
-    await askRecharge(c);
+    if (save.fogStage < 3 && anyCharged()) { await talk(c.name, 'I still have power left! Tap a glowing ' + POWERS[c.id].kind + ' to clear more fog.'); endTalk(); }
+    else if (save.fogStage < 3) await askRecharge(c);
+    else endTalk();
   }
   const WORLD_Y = () => V.FEET - 30;
   const learnedWords = () => WORDS.SPELLS.slice(0, save.powers.length).flatMap(x => x.words);
@@ -1241,7 +1409,7 @@ body.spelling .talk { display: none; }
     const list = (rev ? [{ w: rev, review: true }] : []).concat(words.map(w => ({ w })));
     if (n === 0) list[0].first = true;
     const read = await runWords(list);
-    save.powers.push(p.names[n]); save.lastPowerDate = today(); save.charged = true; persist(); drawHud();
+    save.powers.push(p.names[n]); save.powerCharge.push(true); save.lastPowerDate = today(); persist(); drawHud();
     chime([523, 659, 784, 1046, 1318, 1568]);
     for (let k = 0; k < 4; k++) setTimeout(() => V.sparkle(st, st.comp.x, WORLD_Y(), p.cols, 30), k * 250);
     await talk(CONFIG.petName, 'Wow! You read ' + read + ' words! ' + c.name + '\'s power is waking up...');
@@ -1317,6 +1485,103 @@ body.spelling .talk { display: none; }
     endTalk();
   }
 
+  // ---------- Story maths: bakery (taking away) and home (both) ----------
+  const ITEM = { bakery: { cls: 'bun', one: 'moon bun', many: 'moon buns' }, home: { cls: 'toy', one: 'toy', many: 'toys' } };
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  function pickFact(op) {
+    const ids = [];
+    if (op === '-') for (let a = 3; a <= 10; a++) for (let b = 1; b <= Math.min(5, a - 1); b++) ids.push('s:' + a + '-' + b);
+    else for (let a = 1; a <= 8; a++) for (let b = 1; b <= Math.min(5, 10 - a); b++) ids.push('a:' + a + '+' + b);
+    const seen = id => save.skills[id] && save.skills[id].seen;
+    const due = ids.filter(id => SK.isDue(id)), fresh = ids.filter(id => !seen(id));
+    const pool = due.length ? due : fresh.length ? fresh : ids;
+    const id = pool[Math.floor(Math.random() * pool.length)], m = id.slice(2).split(/[-+]/).map(Number);
+    return { id, op, a: m[0], b: m[1] };
+  }
+  function drawItems(cells) { frameEl.innerHTML = ''; cells.forEach(c => { const d = document.createElement('div'); d.className = 'cell' + (c ? ' on ' + c : ''); frameEl.appendChild(d); }); }
+  function storyRound(place, q) {
+    return new Promise(async resolve => {
+      const it = ITEM[place], ans = q.op === '-' ? q.a - q.b : q.a + q.b, word = n => n === 1 ? it.one : it.many;
+      let tried = false;
+      const cells = Array.from({ length: 10 }, (_, i) => i < q.a ? it.cls : '');
+      numsEl.innerHTML = ''; looseEl.innerHTML = ''; looseEl.hidden = true; numsEl.hidden = true; drawItems(cells);
+      frameEl.setAttribute('aria-label', q.a + ' ' + word(q.a));
+      if (place === 'bakery') {
+        await bsay('There are ' + q.a + ' ' + word(q.a) + ' on the tray.');
+        await bsay('A hungry bear buys ' + q.b + '.');
+        for (let j = 0; j < q.b; j++) { cells[q.a - 1 - j] = it.cls + ' gone'; drawItems(cells); chime([520 - j * 30], 'sine'); await wait(450); }
+      } else if (q.op === '+') {
+        await bsay('There are ' + q.a + ' ' + word(q.a) + ' in the toy box.');
+        await bsay((save.pipFriend ? 'Pip' : 'We') + ' put' + (save.pipFriend ? 's' : '') + ' in ' + q.b + ' more.');
+        for (let j = 0; j < q.b; j++) { cells[q.a + j] = it.cls + ' new'; drawItems(cells); chime([520 + j * 40], 'sine'); await wait(450); }
+      } else {
+        await bsay('There are ' + q.a + ' ' + word(q.a) + ' in the toy box.');
+        await bsay('We take ' + q.b + ' out to play with.');
+        for (let j = 0; j < q.b; j++) { cells[q.a - 1 - j] = it.cls + ' gone'; drawItems(cells); chime([520 - j * 30], 'sine'); await wait(450); }
+      }
+      const finish = async strong => {
+        SK.record(q.id, strong ? 'strong' : 'miss'); daily().bonds++; persist(); chime([784, 988, 1175, 1568]);
+        await bsay(q.op === '-' ? q.a + ' take away ' + q.b + ' is ' + ans + '!' : q.a + ' and ' + q.b + ' make ' + ans + '!'); await wait(900); resolve(strong);
+      };
+      for (let i = 0; i <= 10; i++) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'num'; b.textContent = i;
+        b.addEventListener('click', async () => {
+          if (tried) return; tried = true; numsEl.hidden = true;
+          if (i === ans) { await bsay('Yes! Well done!'); finish(true); return; }
+          b.classList.add('nope'); chime([330, 262], 'sine');
+          await bsay('Let\'s count them together!');
+          let k = 0; const els = [...frameEl.children];
+          for (let j = 0; j < els.length; j++) { if (els[j].classList.contains('on') && !els[j].classList.contains('gone')) { k++; els[j].classList.add('count'); await speak(String(k)); await wait(150); } }
+          finish(false);
+        });
+        numsEl.appendChild(b);
+      }
+      numsEl.hidden = false;
+      await bsay(q.op === '-' && place === 'bakery' ? 'How many moon buns are left?' : q.op === '-' ? 'How many toys are left in the box?' : 'How many toys are in the box now?');
+    });
+  }
+  async function runStory(place, n) {
+    st.spelling = true; document.body.classList.add('spelling'); bondsEl.hidden = false;
+    for (let r = 0; r < n; r++) {
+      if (place === 'tree') await bondRound(pickBonds(1)[0]);
+      else await storyRound(place, pickFact(place === 'bakery' ? '-' : r === 0 ? '+' : '-'));
+    }
+    bondsEl.hidden = true; document.body.classList.remove('spelling'); st.spelling = false;
+  }
+  async function runKeyPuzzle(id) {
+    const c = compInfo(), k = KEYS.find(x => x.id === id);
+    await runStory(id, 2);
+    save.keyParts[id] = true; persist(); drawHud();
+    chime([659, 784, 988, 1318, 1568]);
+    for (let j = 0; j < 4; j++) setTimeout(() => V.sparkle(st, k.x, 70, ['#ffffff', '#dff4ff', '#86c3f2', '#ffe27a'], 22), j * 200);
+    if (id === 'bakery') await talk('Baker Crumb', 'Thank you, dears! You\'re brilliant at counting. Here\'s your key piece!');
+    const n = keyCount();
+    await talk(c.name, 'We found a piece of the Snowflake Key! That\'s ' + n + ' of 3.');
+    if (n < 3) { const next = KEYS.find(x => !save.keyParts[x.id]); await talk(save.pipFriend ? 'Pip' : c.name, 'The next piece is at ' + next.name + '. Let\'s go!'); }
+    else if (save.powers.length < 4) await talk('Pip', 'We have the whole key! Now we need all four of your powers awake. Then we can open the gate!');
+    else await talk('Pip', 'We have the whole Snowflake Key! Let\'s take it to the Frost Gate!');
+    endTalk(); showGuide();
+  }
+  async function openGate() {
+    const c = compInfo(), p = POWERS[c.id];
+    st.comp.face = 1; st.pip.x = st.comp.x - 26; st.comp.tx = st.comp.x; st.arrive = null;
+    await talk(c.name, 'The Snowflake Key is glowing! Let\'s use all our powers together, Pip!');
+    endTalk(); st.scene = true;
+    for (let i = 0; i < 4; i++) { addFx(p.fx[i], p); chime([523 + i * 131, 659 + i * 131, 784 + i * 131], 'sine'); await wait(700); }
+    speak('Friendship Power!'); chime([523, 659, 784, 1046, 1318, 1568, 2093]);
+    for (let j = 0; j < 8; j++) setTimeout(() => V.sparkle(st, 1272, 60 + Math.random() * 50, ['#ffffff', '#cfe9ff', '#ff9fcf', '#ffe27a'], 26), j * 120);
+    await wait(1100);
+    save.gateOpen = true; st.gateOpen = true; persist();
+    for (let j = 0; j < 90; j++) st.parts.push({ x: 1253 + Math.random() * 38, y: 62 + Math.random() * 56, vx: (Math.random() - 0.5) * 2.4, vy: -Math.random() * 1.6, life: 50 + Math.floor(Math.random() * 40), col: ['#ffffff', '#cfe9ff', '#a9d4ff'][j % 3] });
+    chime([1568, 1318, 1046, 784], 'triangle');
+    await wait(900); st.scene = false;
+    await talk(c.name, 'Crash! The ice melted away. The Frost Gate is open!');
+    await talk('Pip', 'Look! The snowy stairs up to Owl Village! I can see my grandma\'s lantern!');
+    await talk('Pip', 'Thank you for being such a good friend. You read words, you counted, and you never gave up!');
+    await talk(c.name, 'Our next adventure begins up those stairs. It\'s coming very soon!');
+    endTalk(); showGuide();
+  }
+
   // ---------- Goodnight ----------
   const sleepEl = $('sleep');
   async function goodnight() {
@@ -1336,16 +1601,22 @@ body.spelling .talk { display: none; }
   }
   $('wake').addEventListener('click', () => { sleepEl.hidden = true; st.mode = 'village'; st.sleepy = false; st.sessionStart = Date.now(); });
 
-  function castPower(i) {
-    if (talking || st.spelling || st.mode !== 'village') return;
-    const p = POWERS[save.companion], kind = p.fx[i];
+  async function castPower(i) {
+    if (talking || st.spelling || st.mode !== 'village' || st.sleepy || st.scene) return;
+    const c = compInfo(), p = POWERS[save.companion], kind = p.fx[i];
+    if (!save.powerCharge[i]) { askRecharge(c); return; }
     chime([988, 1318, 1568, 1976], 'sine'); speak(p.names[i] + '!');
     const nearFog = save.fogStage < 3 && st.comp.x > st.fogX - 80;
     if (nearFog) st.comp.face = 1;
     addFx(kind, p);
-    if (!nearFog) return;
-    if (save.charged) clearFog();
-    else setTimeout(() => askRecharge(compInfo()), 1400);
+    save.powerCharge[i] = false; persist(); drawHud();
+    if (nearFog) { clearFog(); return; }
+    if (!save.emptyTip) {
+      save.emptyTip = true; persist(); await wait(1500);
+      await talk(c.name, 'Whoosh! That used up my ' + p.names[i] + ' power. See how it looks empty now?');
+      await talk(c.name, 'When you want to fill it up again, tap it, and we\'ll read some words together!');
+      endTalk();
+    }
   }
 
   // ---------- Power animations ----------
@@ -1409,7 +1680,7 @@ body.spelling .talk { display: none; }
       CREATURES.forEach((c, i) => { const [bx, by, bw, bh] = c.box || [0, 0, 0, 0]; if (sx >= bx && sx < bx + bw && sy >= by && sy < by + bh) pickCompanion(i); });
       return;
     }
-    if (st.mode !== 'village' || talking || st.spelling || st.sleepy) return;
+    if (st.mode !== 'village' || talking || st.spelling || st.sleepy || st.scene) return;
     const wx = sx + st.cam, hit = V.hotspots(st).find(h => wx >= h.x0 && wx < h.x1 && sy >= h.y0 && sy < h.y1);
     const tx = Math.max(V.MIN_X, Math.min(V.maxX(st), hit ? hit.stand : wx));
     st.comp.tx = tx; st.comp.walking = Math.abs(tx - st.comp.x) > 1; st.arrive = hit ? hit.id : null;
@@ -1513,24 +1784,26 @@ body.spelling .talk { display: none; }
   }
   function drawProgress() {
     const el = $('progress'); el.innerHTML = '';
-    const head = document.createElement('p'); head.textContent = save.companion ? 'Powers awake: ' + save.powers.length + ' of ' + CONFIG.powerSlots + (save.powers.length ? ' (' + save.powers.join(', ') + ')' : '') + '. Snowy path cleared: ' + save.fogStage + ' of 3.' : 'No companion chosen yet.'; el.appendChild(head);
+    const head = document.createElement('p'); head.textContent = save.companion ? 'Powers awake: ' + save.powers.length + ' of ' + CONFIG.powerSlots + (save.powers.length ? ' (' + save.powers.join(', ') + ')' : '') + '. Snowy path cleared: ' + save.fogStage + ' of 3. Key pieces: ' + keyCount() + ' of 3' + (save.gateOpen ? '. Frost Gate open!' : '.') : 'No companion chosen yet.'; el.appendChild(head);
     const map = document.createElement('div'); map.className = 'skillmap';
     const addGroup = (title, items) => { const h = document.createElement('p'); h.className = 'maphead'; h.textContent = title; map.appendChild(h); const row = document.createElement('div'); row.className = 'chips'; items.forEach(([id, label]) => { const c = document.createElement('span'); const stt = SK.state(id); c.className = 'chip ' + stt; c.textContent = label + (SK.isDue(id) ? ' •' : ''); c.title = stt + (SK.isDue(id) ? ', due for review' : ''); row.appendChild(c); }); map.appendChild(row); };
     addGroup('Words', WORDS.SPELLS.flatMap(x => x.words).map(w => ['w:' + w, w]));
     addGroup('Number bonds to 10', EASY.slice().sort((a, b) => a - b).map(k => ['b:' + k, k + ' + ' + (10 - k)]));
+    const facts = Object.keys(save.skills).filter(k => /^[as]:/.test(k) && save.skills[k].seen).sort();
+    if (facts.length) addGroup('Adding and taking away', facts.map(k => [k, k.slice(2).replace('-', ' − ').replace('+', ' + ')]));
     const key = document.createElement('p'); key.className = 'mapkey'; key.textContent = 'Grey: not started · Amber: learning · Green: mastered (answered alone on 2 separate days) · • due for review'; map.appendChild(key);
     const dd = daily(); const td = document.createElement('p'); td.textContent = 'Today: ' + dd.words.length + ' words read, ' + dd.bonds + ' number bonds, ' + dd.lanterns + ' lantern' + (dd.lanterns === 1 ? '' : 's') + ' lit. Wishing Tree: ' + save.lit + ' of 10.'; map.appendChild(td);
     el.appendChild(map);
     const words = {}, sounds = {};
     save.log.forEach(e => {
       const w = words[e.w] || (words[e.w] = { read: 0, picked: 0, helped: 0, missed: 0, heard: [] });
-      if (e.r === 'read') w.read++; else if (e.r === 'picked') w.picked++; else if (e.r === 'helped' || e.r === 'grownup') w.helped++; else if (e.r === 'close' || e.r === 'miss' || e.r === 'pickmiss') { w.missed++; if (e.h && !w.heard.includes(e.h)) w.heard.push(e.h); }
+      if (e.r === 'read') w.read++; else if (e.r === 'picked' || e.r === 'built') w.picked++; else if (e.r === 'helped' || e.r === 'grownup') w.helped++; else if (e.r === 'close' || e.r === 'miss' || e.r === 'pickmiss') { w.missed++; if (e.h && !w.heard.includes(e.h)) w.heard.push(e.h); }
       if (e.r === 'close' && e.p) sounds[e.p] = (sounds[e.p] || 0) + 1;
     });
     const keys = Object.keys(words);
     if (!keys.length) { const p = document.createElement('p'); p.textContent = 'No words tried yet.'; el.appendChild(p); return; }
     const wrap = document.createElement('div'); wrap.className = 'tablewrap';
-    const tb = document.createElement('table'); tb.innerHTML = '<thead><tr><th>Word</th><th>Read aloud</th><th>Picked picture</th><th>With help</th><th>Missed</th><th>Heard / picked instead</th></tr></thead>';
+    const tb = document.createElement('table'); tb.innerHTML = '<thead><tr><th>Word</th><th>Read aloud</th><th>Picture or built</th><th>With help</th><th>Missed</th><th>Heard / picked instead</th></tr></thead>';
     const body = document.createElement('tbody');
     keys.forEach(k => { const w = words[k], tr = document.createElement('tr'); [k, w.read, w.picked, w.helped, w.missed, w.heard.join(', ') || '–'].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }); body.appendChild(tr); });
     tb.appendChild(body); wrap.appendChild(tb); el.appendChild(wrap);
