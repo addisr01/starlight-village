@@ -18,7 +18,9 @@
 *, *::before, *::after { box-sizing: inherit; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--page); color: var(--ink); font-family: "Pixelify Sans", ui-rounded, "Trebuchet MS", system-ui, sans-serif; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-.app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 8px; }
+.app { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 8px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.app::before, .app::after { content: ''; flex: 1 0 0; }
+.app > .stage { flex-shrink: 0; }
 .stage { position: relative; width: min(100%, calc((100vh - 200px) * 16 / 9)); width: min(100%, calc((100dvh - 200px) * 16 / 9)); min-width: min(100%, 300px); border-radius: 12px; overflow: hidden; border: 3px solid #2b1d45; box-shadow: 0 5px 0 #2b1d45; background: #150f36; }
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: manipulation; }
 .hud { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; align-items: center; gap: 8px; pointer-events: none; }
@@ -27,7 +29,7 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-
 .slot { font: inherit; font-size: clamp(0.9rem, 2.4vw, 1.3rem); background: none; border: 0; padding: 2px; min-width: 32px; min-height: 32px; filter: grayscale(1) brightness(0.55); opacity: 0.7; cursor: default; }
 .slot.awake { filter: drop-shadow(0 0 4px #fff3c4); opacity: 1; cursor: pointer; animation: glowp 2.4s ease-in-out infinite; }
 @keyframes glowp { 50% { transform: scale(1.12); } }
-.spelling .stage { width: min(100%, calc((100vh - 330px) * 16 / 9)); width: min(100%, calc((100dvh - 330px) * 16 / 9)); }
+.spelling .stage { width: min(100%, calc((100vh - 500px) * 16 / 9)); width: min(100%, calc((100dvh - 500px) * 16 / 9)); }
 body.spelling .talk { display: none; }
 .spell [hidden] { display: none !important; }
 .spell { width: min(100%, 900px); background: var(--plate); border: 3px solid var(--edge); border-radius: 12px; padding: 10px 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -96,6 +98,57 @@ body.spelling .talk { display: none; }
 .pool .tile { font-size: clamp(2rem, 8vw, 3rem); }
 .tile.used { visibility: hidden; }
 .tile.shake { animation: nope 0.4s ease; }
+.hud .chip { pointer-events: auto; font: inherit; cursor: pointer; min-height: 36px; touch-action: manipulation; white-space: nowrap; }
+.hud .chip:focus-visible { outline: 3px solid #ffe27a; outline-offset: 2px; }
+/* sentences and tricky words */
+.tiles.sentence { flex-wrap: wrap; justify-content: center; max-width: 620px; gap: 8px; }
+.spell button.wtile, .wtile { font: 700 clamp(1.4rem, 5.4vw, 2.2rem)/1.1 "Andika", "Pixelify Sans", system-ui, sans-serif; color: #2a1d4a; background: #fff7e8; border: 4px solid #2b1d45; border-radius: 12px; box-shadow: 0 4px 0 #2b1d45; padding: 6px 12px 9px; min-height: 0; cursor: pointer; touch-action: manipulation; }
+.spell button.wtile.tricky, .wtile.tricky { background: #fff1b8; border-color: #c48a12; box-shadow: 0 4px 0 #8a5d00; }
+.spell button.wtile.glow, .wtile.glow { box-shadow: 0 0 0 5px #ffe27a, 0 4px 0 #2b1d45; }
+.spell button.wtile.reading, .wtile.reading { background: #ffe27a; transform: translateY(-4px); }
+.wtile.used { visibility: hidden; }
+.wtile.shake { animation: nope 0.4s ease; }
+.tile.trickpart { background: #fff1b8; border-color: #c48a12; color: #8a3a00; }
+.tiles.card .tile { cursor: default; }
+.tile.wordcard { font-size: clamp(3rem, 14vw, 5rem); padding: 10px 26px 16px; }
+.spic { flex: none; }
+.spic canvas { display: block; width: clamp(96px, 22vw, 150px); height: auto; aspect-ratio: 24 / 26; image-rendering: pixelated; border: 4px solid #2b1d45; border-radius: 12px; background: #2a2058; }
+.spic canvas.thaw { animation: thaw 1s ease; }
+@keyframes thaw { 0% { filter: brightness(2.2) saturate(0); transform: scale(0.94); } 100% { filter: none; transform: none; } }
+.spell button.picopt.scene canvas { width: clamp(80px, 20vw, 120px); aspect-ratio: 24 / 26; }
+.slots-row.words { flex-wrap: wrap; justify-content: center; max-width: 640px; }
+.slotbox.wslot { font-size: clamp(1.3rem, 5vw, 2rem); min-width: 2.6em; min-height: 1.4em; padding: 6px 10px 9px; }
+.judge { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.judge[hidden] { display: none !important; }
+.spell .judge button.jbtn { font: 700 1.5rem/1 "Andika", system-ui, sans-serif; min-height: 66px; min-width: 150px; padding: 10px 20px; border: 4px solid #2b1d45; box-shadow: 0 4px 0 #2b1d45; }
+.spell .judge button.jbtn.yes { background: #8fe3a8; color: #10331f; }
+.spell .judge button.jbtn.no { background: #ffb3c4; color: #4a1020; }
+.spell .judge button.jbtn.ear { background: #86c3f2; color: #10233a; min-width: 120px; }
+.spell .judge button.jbtn.ear.heard { background: #ffe27a; }
+.jlab { color: var(--soft); width: 100%; text-align: center; }
+.spell button.cont { background: #ffe27a; color: #10233a; border-color: #2b1d45; font-size: 1.3rem; padding: 8px 22px; }
+.tenframe .cell.on.owl { background: radial-gradient(circle at 37% 42%, #2a1a4a 0 7%, transparent 8%), radial-gradient(circle at 63% 42%, #2a1a4a 0 7%, transparent 8%), radial-gradient(circle at 50% 58%, #f5a04a 0 7%, transparent 8%), radial-gradient(circle at 50% 50%, #f7faff 0 44%, #c7c9de 45% 50%, #2a2058 54%); border-color: #c7c9de; animation: none; }
+.tenframe .cell.on.owl.new { border-color: #ffe27a; }
+/* map fade, cards, badge book */
+.fade { position: fixed; inset: 0; background: #0a0618; opacity: 0; transition: opacity 0.45s ease; z-index: 6; pointer-events: none; }
+.fade.on { opacity: 1; pointer-events: auto; }
+.fade[hidden] { display: none; }
+.overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(8, 5, 20, 0.6); z-index: 7; padding: 16px; }
+.overlay[hidden] { display: none; }
+.ocard { width: min(100%, 440px); max-height: 90vh; overflow-y: auto; background: var(--plate); border: 3px solid var(--edge); border-radius: 14px; padding: 18px 20px; text-align: center; animation: cardin 0.35s ease; }
+@keyframes cardin { from { transform: scale(0.85); opacity: 0; } }
+.cicon { font-size: 3.4rem; margin: 0; line-height: 1.1; }
+.ctitle { font-size: 1.5rem; font-weight: 600; margin: 6px 0; }
+.cbody { font-family: "Andika", system-ui, sans-serif; font-size: 1.15rem; line-height: 1.45; margin: 6px 0 14px; color: var(--ink); }
+.cbtn { font: inherit; font-size: 1.3rem; min-height: 52px; padding: 8px 26px; color: #10233a; background: #ffe27a; border: 3px solid #2b1d45; border-radius: 10px; cursor: pointer; }
+.cbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.ocard.book { width: min(100%, 560px); }
+.bookgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0 16px; }
+.medal { border: 3px dashed var(--edge); border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--soft); }
+.medal.got { border-style: solid; border-color: #e0a33a; background: rgba(255, 226, 122, 0.12); color: var(--ink); }
+.medal .micon { font-size: 2.2rem; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 50%; background: #2a2058; color: #b7a8e2; }
+.medal.got .micon { background: radial-gradient(circle, #fff3c4, #ffd66e 60%, #e0a33a); }
+.medal small { font-size: 0.85rem; line-height: 1.3; }
 .grownup span { color: var(--soft); font-size: 1rem; }
 .grownup button { font-size: 1.05rem !important; min-height: 48px !important; }
 .tile:focus-visible, .spell button:focus-visible, .slot:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -130,7 +183,7 @@ body.spelling .talk { display: none; }
 .talk button:focus-visible, .choice:focus-visible, .panel button:focus-visible, .gear:focus-visible, .start button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .choices { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
 .choice { padding: 8px 22px; font-size: 1.4rem; }
-.choice:first-child { background: #ffe27a; color: #10233a; border-color: #2b1d45; }
+.choices:not(.quiz) .choice:first-child { background: #ffe27a; color: #10233a; border-color: #2b1d45; }
 .settings { position: fixed; inset: 0; background: rgba(10, 6, 24, 0.7); display: grid; place-items: center; padding: 16px; z-index: 5; }
 .settings[hidden] { display: none; }
 .panel { width: min(100%, 560px); max-height: 90%; overflow-y: auto; background: var(--plate); border: 3px solid var(--edge); border-radius: 12px; padding: 16px; }
@@ -148,7 +201,7 @@ body.spelling .talk { display: none; }
 <div class="app">
   <div class="stage">
     <canvas id="scene" width="256" height="144" aria-label="Starlight Village game"></canvas>
-    <div class="hud" id="hud" hidden><span class="chip" id="compChip"></span><span class="slots" id="slots" role="img"></span><button type="button" class="goal" id="goal" hidden aria-label="What to do next">💡 <span id="goalText"></span></button></div>
+    <div class="hud" id="hud" hidden><button type="button" class="chip" id="compChip" aria-label="Your companion and badges"></button><span class="slots" id="slots" role="img"></span><button type="button" class="goal" id="goal" hidden aria-label="What to do next">💡 <span id="goalText"></span></button></div>
     <button class="gear" id="gear" type="button" aria-label="Grown-up settings">⚙︎</button>
     <div class="start" id="start"><button type="button" id="startBtn">▶ Play</button></div>
   </div>
@@ -160,8 +213,9 @@ body.spelling .talk { display: none; }
   </section>
   <section class="spell" id="spell" hidden aria-live="polite">
     <p class="spell-msg" id="spellMsg"></p>
-    <div class="spell-main"><div class="tiles" id="tiles"></div><canvas id="pic" width="16" height="16" hidden aria-hidden="true"></canvas></div>
-    <div class="spell-btns"><button type="button" id="spellAgain" aria-label="Hear it again">🔊</button><button type="button" class="mic" id="micBtn" data-on="false">🎤 Read it!</button><button type="button" id="helpBtn" hidden>💡 Help</button></div>
+    <div class="spell-main"><div class="tiles" id="tiles"></div><canvas id="pic" width="16" height="16" hidden aria-hidden="true"></canvas><div class="spic" id="spic" hidden aria-hidden="true"></div></div>
+    <div class="judge" id="judge" hidden></div>
+    <div class="spell-btns"><button type="button" id="spellAgain" aria-label="Hear it again">🔊</button><button type="button" class="mic" id="micBtn" data-on="false">🎤 Read it!</button><button type="button" id="helpBtn" hidden>💡 Help</button><button type="button" class="cont" id="contBtn" hidden>▶ Next</button></div>
     <div class="other" id="otherWays"><span>Other ways:</span><button type="button" id="picBtn">🖼 Pictures</button><button type="button" id="buildBtn">🔤 Build it</button></div>
     <div class="build" id="build" hidden></div>
     <div class="pics" id="pics" hidden></div>
@@ -177,6 +231,13 @@ body.spelling .talk { display: none; }
 </div>
 <div class="sleep" id="sleep" hidden>
   <div class="sleep-card"><p class="zz">Zzz…</p><p class="sleep-title">See you tomorrow!</p><p id="sleepSummary"></p><button type="button" id="wake">Grown-ups: keep playing</button></div>
+</div>
+<div class="fade" id="fade" hidden></div>
+<div class="overlay" id="card" hidden>
+  <div class="ocard" role="dialog" aria-modal="true" aria-labelledby="cardTitle"><p class="cicon" id="cardIcon"></p><p class="ctitle" id="cardTitle"></p><p class="cbody" id="cardBody"></p><button type="button" class="cbtn" id="cardBtn">Yay!</button></div>
+</div>
+<div class="overlay" id="badgeBook" hidden>
+  <div class="ocard book" role="dialog" aria-modal="true" aria-labelledby="bookTitle"><p class="ctitle" id="bookTitle">Your badges</p><div class="bookgrid" id="bookGrid"></div><button type="button" class="cbtn" id="bookClose">Close</button></div>
 </div>
 <div class="settings" id="settings" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="setTitle">
@@ -678,12 +739,56 @@ body.spelling .talk { display: none; }
   const STARS = Array.from({ length: 70 }, (_, k) => ({ x: Math.floor(hash(k, 1) * W), y: Math.floor(hash(k, 2) * 70), p: hash(k, 5) * 200, big: hash(k, 6) > 0.85 }));
   const FLIES = Array.from({ length: 22 }, (_, k) => ({ x: hash(k, 31) * 640, y: 70 + hash(k, 32) * 60, p: hash(k, 33) * 628 }));
 
-  function renderVillage(buf, t, s) {
-    buf.set(sky.d);
-    const put = (x, y, h) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); };
+  // ---------- Shared drawing pieces (used by every map) ----------
+  function drawSky(buf, t, skySurf) {
+    buf.set((skySurf || sky).d);
+    const put = (x, y, h) => { if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); };
     STARS.forEach(st => { const tw = (Math.sin((t + st.p) / 22) + 1) / 2; if (tw < 0.25) return; put(st.x, st.y, tw > 0.8 ? '#ffffff' : '#c9bcff'); if (st.big && tw > 0.7) { put(st.x - 1, st.y, '#8f80d8'); put(st.x + 1, st.y, '#8f80d8'); put(st.x, st.y - 1, '#8f80d8'); put(st.x, st.y + 1, '#8f80d8'); } });
+  }
+  function drawLayer(buf, surf, cam) {
+    const ww = surf.w;
+    for (let y = 0; y < H; y++) { const row = y * ww + cam, o = y * W; for (let x = 0; x < W; x++) { const v = surf.d[row + x]; if (v) buf[o + x] = v; } }
+  }
+  function putter(buf) { return (x, y, h) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = pack(h); }; }
+  function blitAt(buf, spr, ox, oy) { ox = Math.round(ox); oy = Math.round(oy); for (let y = 0; y < spr.h; y++) for (let x = 0; x < spr.w; x++) { const v = spr.data[y * spr.w + x]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; } }
+  // npcs: [{ x, draw(buf, put, cam) }]; the companion and (optionally) Pip are added here
+  function drawActors(buf, t, s, cam, npcs, showPip) {
+    const put = putter(buf);
+    const ents = npcs.map(n => ({ x: n.x, npc: n })).concat([{ x: s.comp.x, comp: true }]).concat(showPip && s.pip ? [{ x: s.pip.x, pip: true }] : []).sort((a, b) => a.x - b.x);
+    ents.forEach(e => {
+      if (e.npc) { e.npc.draw(buf, put, cam); return; }
+      if (e.pip) {
+        const p = s.pip, spr = PIP[p.mood] || PIP.scared, shake = p.mood === 'scared' && (t % 6 < 3) ? 1 : 0, hop = p.follow && p.moving ? -Math.round(Math.abs(Math.sin(t / 3)) * 4) : Math.round((Math.sin(t / 14) + 1) / 2);
+        blitAt(buf, spr, p.x - cam - 16 + shake, (p.follow ? FEET : 118) - 30 + hop);
+        return;
+      }
+      const c = CREATURES[s.comp.i], blink = ((t + 20) % 170) < 6, faceLeft = s.comp.face < 0;
+      const spr = s.comp.evo ? (faceLeft ? (blink ? s.comp.evo.shutF : s.comp.evo.openF) : (blink ? s.comp.evo.shut : s.comp.evo.open)) : faceLeft ? (blink ? c.shutF : c.openF) : (blink ? c.shut : c.open);
+      const bob = s.comp.walking ? -Math.round(Math.abs(Math.sin(t / 3.2)) * 3) : Math.round((Math.sin(t / 18) + 1) / 2);
+      blitAt(buf, spr, s.comp.x - cam - 24, FEET - 46 + bob);
+      const ph = t % 90; if (ph < 18) { const fx = faceLeft ? 47 - c.fx : c.fx, x = Math.round(s.comp.x - cam - 24 + fx), y = FEET - 46 + bob + c.fy, r = ph < 9 ? 1 : 2, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
+    });
+  }
+  const BUBBLE = ['XXXXXXX', 'X.....X', 'X.X.X.X', 'X.....X', 'XXXXXXX', '..XX...', '.X.....'];
+  function drawBubble(put, bx, by) { BUBBLE.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === 'X') put(bx + xx, by + yy, '#2b1d45'); else if (ch === '.' && yy > 0 && yy < 4 && xx > 0 && xx < 6) put(bx + xx, by + yy, '#ffffff'); })); }
+  function drawOverlay(buf, t, s, cam) {
+    const put = putter(buf);
+    if (s.comp.walking) { const mx = s.comp.tx - cam, ph = (t >> 2) % 2; put(mx, FEET + 2, '#ffe27a'); if (ph) { put(mx - 2, FEET + 2, '#fff3c4'); put(mx + 2, FEET + 2, '#fff3c4'); put(mx, FEET, '#fff3c4'); put(mx, FEET + 4, '#fff3c4'); } }
+    s.parts = (s.parts || []).filter(p => p.life > 0);
+    s.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += p.g === undefined ? 0.03 : p.g; p.life--; if (p.life % 4 < 3) put(p.x - cam, p.y, p.col); });
+    if (s.guide && s.guide.until > t) {
+      const gx = s.guide.x - cam, onScreen = gx > 8 && gx < W - 8, bob = Math.round(Math.abs(Math.sin(t / 5)) * 4);
+      const draw = (rows, ox, oy) => rows.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === '.') return; const X = ox + xx, Y = oy + yy; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = pack(ch === 'X' ? '#2b1d45' : ch === 'o' ? '#ffffff' : '#ffe27a'); }));
+      if (onScreen) draw(['XXXXXXXXX', 'XyoyyyyyX', '.XyyyyyX.', '..XyyyX..', '...XyX...', '....X....'], Math.round(gx) - 4, (s.guide.y || 40) + bob);
+      else { const R = ['XX.....', 'XyXX...', 'XoyyXX.', 'XyyyyyX', 'XyyyXX.', 'XyXX...', 'XX.....']; if (gx >= W - 8) draw(R, W - 10 - bob, 66); else draw(R.map(r => [...r].reverse().join('')), 3 + bob, 66); }
+    }
+  }
+
+  function renderVillage(buf, t, s) {
+    drawSky(buf, t);
+    const put = putter(buf);
     const cam = s.cam | 0;
-    for (let y = 0; y < H; y++) { const row = y * WW + cam, o = y * W; for (let x = 0; x < W; x++) { const v = w.d[row + x]; if (v) buf[o + x] = v; } }
+    drawLayer(buf, w, cam);
     // lit lanterns on the Wishing Tree
     const lit = s.lit || 0;
     TREE_LANTERNS.forEach(([lx, ly], k) => {
@@ -704,37 +809,13 @@ body.spelling .talk { display: none; }
       const dens = Math.min(0.94, (x - fx0) / 50) * (1 - Math.max(0, (y - 128) / 12)) * (1 - Math.max(0, (46 - y) / 16)) + Math.sin((y + t * 0.6) / 7 + x / 11) * 0.12;
       if (dith(x + (t >> 3), y) < dens) buf[y * W + sx] = pack(y % 3 ? '#e6e0ff' : '#d6ccf5');
     }
-    // characters
-    const draw = (spr, wx, oy) => { const ox = Math.round(wx - cam - 24); for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) { const v = spr.data[y * 48 + x]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; } };
-    const ents = [{ x: SPOT_X, spot: true }, { x: s.comp.x, comp: true }].concat(s.pip && s.fogX > 1050 ? [{ x: s.pip.x, pip: true }] : []).sort((a, b) => a.x - b.x);
-    ents.forEach(e => {
-      if (e.pip) {
-        const p = s.pip, spr = PIP[p.mood] || PIP.scared, shake = p.mood === 'scared' && (t % 6 < 3) ? 1 : 0, hop = p.follow && p.moving ? -Math.round(Math.abs(Math.sin(t / 3)) * 4) : Math.round((Math.sin(t / 14) + 1) / 2);
-        const ox = Math.round(p.x - cam - 16 + shake), oy = (p.follow ? FEET : 118) - 30 + hop;
-        for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const v = spr.data[y * 32 + x]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; }
-        return;
-      }
-      if (e.spot) {
-        const blink = (t % 150) < 7;
-        draw(blink ? SPOT.shut : SPOT.open, SPOT_X, FEET - 46 + ((t % 80) < 40 ? 0 : 1));
-        if (!s.metSpot && !s.talking) { const by = 70 + Math.round(Math.sin(t / 8) * 1.5), bx = SPOT_X - cam + 12; ['XXXXXXX', 'X.....X', 'X.X.X.X', 'X.....X', 'XXXXXXX', '..XX...', '.X.....'].forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === 'X') put(bx + xx, by + yy, '#2b1d45'); else if (ch === '.' && yy > 0 && yy < 4 && xx > 0 && xx < 6) put(bx + xx, by + yy, '#ffffff'); })); }
-      } else {
-        const c = CREATURES[s.comp.i], blink = ((t + 20) % 170) < 6, faceLeft = s.comp.face < 0;
-        const spr = faceLeft ? (blink ? c.shutF : c.openF) : (blink ? c.shut : c.open);
-        const bob = s.comp.walking ? -Math.round(Math.abs(Math.sin(t / 3.2)) * 3) : Math.round((Math.sin(t / 18) + 1) / 2);
-        draw(spr, s.comp.x, FEET - 46 + bob);
-        const ph = t % 90; if (ph < 18) { const fx = faceLeft ? 47 - c.fx : c.fx, x = Math.round(s.comp.x - cam - 24 + fx), y = FEET - 46 + bob + c.fy, r = ph < 9 ? 1 : 2, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
-      }
-    });
-    if (s.comp.walking) { const mx = s.comp.tx - cam, ph = (t >> 2) % 2; put(mx, FEET + 2, '#ffe27a'); if (ph) { put(mx - 2, FEET + 2, '#fff3c4'); put(mx + 2, FEET + 2, '#fff3c4'); put(mx, FEET, '#fff3c4'); put(mx, FEET + 4, '#fff3c4'); } }
-    s.parts = (s.parts || []).filter(p => p.life > 0);
-    s.parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--; if (p.life % 4 < 3) put(p.x - cam, p.y, p.col); });
-    if (s.guide && s.guide.until > t) {
-      const gx = s.guide.x - cam, onScreen = gx > 8 && gx < W - 8, bob = Math.round(Math.abs(Math.sin(t / 5)) * 4);
-      const draw = (rows, ox, oy) => rows.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === '.') return; const X = ox + xx, Y = oy + yy; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = pack(ch === 'X' ? '#2b1d45' : ch === 'o' ? '#ffffff' : '#ffe27a'); }));
-      if (onScreen) draw(['XXXXXXXXX', 'XyoyyyyyX', '.XyyyyyX.', '..XyyyX..', '...XyX...', '....X....'], Math.round(gx) - 4, (s.guide.y || 40) + bob);
-      else { const R = ['XX.....', 'XyXX...', 'XoyyXX.', 'XyyyyyX', 'XyyyXX.', 'XyXX...', 'XX.....']; if (gx >= W - 8) draw(R, W - 10 - bob, 66); else draw(R.map(r => [...r].reverse().join('')), 3 + bob, 66); }
-    }
+    const spot = { x: SPOT_X, draw(b, put2) {
+      const blink = (t % 150) < 7;
+      blitAt(b, blink ? SPOT.shut : SPOT.open, SPOT_X - cam - 24, FEET - 46 + ((t % 80) < 40 ? 0 : 1));
+      if (!s.metSpot && !s.talking) drawBubble(put2, SPOT_X - cam + 12, 70 + Math.round(Math.sin(t / 8) * 1.5));
+    } };
+    drawActors(buf, t, s, cam, [spot], s.fogX > 1050);
+    drawOverlay(buf, t, s, cam);
     FLIES.forEach(fl => { const x = fl.x + Math.sin((t + fl.p) / 40) * 10 - cam, y = fl.y + Math.sin((t + fl.p) / 27) * 4; if (Math.sin((t + fl.p) / 13) > 0) { put(x, y, '#fff3a0'); put(x + 1, y, '#c8b85a'); } });
   }
 
@@ -742,8 +823,177 @@ body.spelling .talk { display: none; }
     for (let k = 0; k < (n || 20); k++) { const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 1.3; s.parts.push({ x: wx, y: wy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.7, life: 26 + Math.floor(Math.random() * 18), col: cols[k % cols.length] }); }
   }
 
-  const api = { TREE_LANTERNS, dith, WW, FEET, SPOT_X, FOG_STOPS, hotspots, MIN_X, maxX, renderVillage, sparkle };
+  const api = { Surf, sky, OUT_COL: OUT, pipOwl, PIP, drawSky, drawLayer, drawActors, drawOverlay, drawBubble, blitAt, putter, TREE_LANTERNS, dith, WW, FEET, SPOT_X, FOG_STOPS, hotspots, MIN_X, maxX, renderVillage, sparkle };
   if (typeof module !== 'undefined') module.exports = api; else root.VILLAGE = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+// Owl Village: the second map, at the top of the snowy stairs. Depends on engine.js (PX) and world.js (VILLAGE).
+(function (root) {
+  'use strict';
+  const PX = root.PX || require('./engine.js');
+  const V = root.VILLAGE || require('./world.js');
+  const { W, H, Sprite, pack, mix, hash } = PX;
+  const { Surf, dith, FEET } = V, OUT = V.OUT_COL;
+  const OW = 640;
+
+  // ---------- Sky with an aurora ----------
+  const sky = new Surf(W, H);
+  sky.d.set(V.sky.d);
+  for (let x = 0; x < W; x++) {
+    const bands = [[30 + Math.sin(x / 19) * 6 + Math.sin(x / 7) * 2, '#5fe0b4', 9], [46 + Math.sin(x / 23 + 2) * 7, '#b98cff', 8], [22 + Math.sin(x / 31 + 4) * 5, '#ff9fd6', 5]];
+    bands.forEach(([cy, col, th]) => { for (let y = Math.floor(cy - th); y < cy + th; y++) { const k = 1 - Math.abs(y - cy) / th; if (dith(x, y) < k * 0.6) { const i = y * W + x, v = sky.d[i]; sky.set(x, y, mix(PX.toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), col, 0.55)); } } });
+  }
+
+  // ---------- Ground layer ----------
+  const g = new Surf(OW, H);
+  // far snowy peaks
+  [[70, 34, 80], [230, 26, 100], [420, 30, 95], [600, 22, 110]].forEach(([mx, top, half]) => {
+    for (let y = top; y < 98; y++) { const hw = (y - top) / (98 - top) * half; for (let x = Math.floor(mx - hw); x <= mx + hw; x++) { if (x < 0 || x >= OW) continue; const cap = y < top + (98 - top) * 0.3 + Math.sin(x / 5) * 2; g.set(x, y, cap ? (x < mx ? '#ffffff' : '#dfe7fb') : (x < mx ? '#4c4a92' : '#3e3c80')); } }
+  });
+  // snowy pines
+  for (let k = 0; k < 86; k++) {
+    const tx = Math.floor(k * 7.6 + hash(k, 41) * 5), th = 12 + Math.floor(hash(k, 42) * 11);
+    for (let j = 0; j < th; j++) { const half = Math.floor(j * 0.45) + (j % 4 === 3 ? 1 : 0); for (let i = -half; i <= half; i++) g.set(tx + i, 100 - th + j, (j % 4 === 0 || j < 2) ? '#e8eeff' : '#3a3a7a'); }
+  }
+  // snow ground + path
+  for (let y = 100; y < H; y++) for (let x = 0; x < OW; x++) { const d = dith(x, y); g.set(x, y, ['#eef3ff', '#dfe7fb', '#cfd9f4', '#c0cbee'][Math.min(3, Math.floor((y - 100) / 44 * 3 + d))]); }
+  for (let y = 117; y < 136; y++) for (let x = 0; x < OW; x++) { const edge = y === 117 || y === 135; if (edge && dith(x, y) > 0.5) continue; g.set(x, y, hash(x, y) > 0.94 ? '#c9d2f0' : '#b7c3e8'); }
+  for (let k = 0; k < 160; k++) { const x = Math.floor(hash(k, 51) * OW), y = 101 + Math.floor(hash(k, 52) * 42); if (y > 115 && y < 137) continue; g.set(x, y, '#ffffff'); }
+
+  // top of the stairs (back down to Starlight Village), at the left edge
+  for (let k = 0; k < 4; k++) { const sx = 2 + k * 9, sy = 132 - k * 0; g.rect(sx, 118 + k * 5, 9, 18 - k * 5, OUT); g.rect(sx, 119 + k * 5, 8, 17 - k * 5, '#dfe7fb'); g.rect(sx, 119 + k * 5, 8, 1, '#ffffff'); }
+  g.rect(0, 116, 44, 2, OUT); g.rect(0, 112, 2, 6, OUT); g.rect(38, 104, 2, 14, OUT); g.rect(2, 104, 38, 2, '#8c6448');
+  [[6, 98], [36, 98]].forEach(([lx, ly]) => { g.rect(lx - 1, ly, 4, 6, OUT); g.rect(lx, ly + 1, 2, 4, '#ffd66e'); });
+
+  // Grandma Hoot's tree house
+  const TX = 120;
+  g.rect(TX - 20, 34, 42, 82, OUT); g.rect(TX - 19, 34, 40, 82, '#6b4a5e'); for (let y = 36; y < 116; y += 6) g.rect(TX - 15 + (y % 12 ? 4 : 0), y, 2, 4, '#83607a');
+  g.poly([[TX - 30, 116], [TX - 19, 100], [TX - 19, 116]], '#6b4a5e'); g.poly([[TX + 31, 116], [TX + 20, 100], [TX + 20, 116]], '#6b4a5e');
+  [[TX, 26, 44, 22, '#2f2566'], [TX - 30, 34, 22, 14, '#2f2566'], [TX + 30, 34, 22, 14, '#2f2566'], [TX, 22, 40, 18, '#3c2f7a']].forEach(([x, y, rx, ry, c]) => g.ellipse(x, y, rx, ry, c));
+  for (let x = TX - 52; x < TX + 52; x++) for (let y = 4; y < 46; y++) { const d = Math.hypot((x - TX) / 46, (y - 20) / 20); if (d < 1 && y < 20 + Math.sin(x / 4) * 2 - (1 - d) * 4 && g.get(x, y)) g.set(x, y, dith(x, y) < 0.8 ? '#f4f8ff' : '#dfe7fb'); }
+  g.ellipse(TX, 96, 10, 14, OUT); g.ellipse(TX, 96, 9, 13, '#ffd66e'); g.rect(TX - 9, 96, 18, 14, '#ffd66e'); g.rect(TX - 10, 108, 20, 2, OUT);
+  g.ellipse(TX, 94, 6, 9, '#ffe9a8'); g.set(TX + 4, 100, '#8c6448');
+  g.ellipse(TX - 8, 56, 6, 6, OUT); g.ellipse(TX - 8, 56, 5, 5, '#ffd66e'); g.rect(TX - 9, 51, 2, 10, '#6b4a5e'); g.rect(TX - 13, 55, 10, 2, '#6b4a5e');
+  g.rect(TX + 22, 70, 14, 3, '#8c6448'); g.rect(TX + 33, 64, 2, 9, OUT); g.rect(TX + 27, 62, 11, 3, OUT); g.rect(TX + 28, 63, 9, 1, '#b9a4ff');
+  // campfire ring + logs
+  const FX = 272;
+  g.poly([[FX - 14, 124], [FX + 14, 118], [FX + 15, 121], [FX - 13, 127]], '#7a4f30'); g.poly([[FX - 14, 118], [FX + 14, 124], [FX + 13, 127], [FX - 15, 121]], '#9a6b45');
+  for (let k = 0; k < 9; k++) { const a = Math.PI + k * Math.PI / 8, x = FX + Math.cos(a) * 17, y = 124 + Math.sin(a) * 4 + 4; g.ellipse(x, y, 3.2, 2.4, OUT); g.ellipse(x, y - 0.4, 2.4, 1.7, '#9aa2c4'); }
+  for (let k = 0; k < 5; k++) { const x = FX - 12 + k * 6; g.ellipse(x, 128, 3, 2, OUT); g.ellipse(x, 127.6, 2.2, 1.4, '#7c84a8'); }
+  // nest tree
+  const NX = 392;
+  g.rect(NX - 7, 52, 14, 66, OUT); g.rect(NX - 6, 52, 12, 66, '#5c4270'); g.rect(NX - 4, 56, 2, 58, '#73558a');
+  [[NX, 34, 34, 22, '#2f2566'], [NX - 22, 46, 18, 12, '#2f2566'], [NX + 24, 44, 18, 12, '#2f2566'], [NX, 30, 30, 18, '#3c2f7a']].forEach(([x, y, rx, ry, c]) => g.ellipse(x, y, rx, ry, c));
+  for (let x = NX - 40; x < NX + 44; x++) for (let y = 10; y < 52; y++) { const d = Math.hypot((x - NX) / 38, (y - 32) / 22); if (d < 1 && y < 26 + Math.sin(x / 3) * 2 && g.get(x, y)) g.set(x, y, '#f4f8ff'); }
+  g.ellipse(NX, 62, 20, 6, OUT); g.ellipse(NX, 61, 19, 5, '#9a6b45'); for (let x = NX - 18; x < NX + 18; x += 3) { g.set(x, 59 + (x % 2), '#c89464'); g.set(x + 1, 63, '#7a4f30'); }
+  g.rect(NX - 18, 57, 36, 1, '#f4f8ff');
+  // Owl School
+  const SX = 512;
+  g.rect(SX - 31, 70, 62, 38, OUT); g.rect(SX - 30, 71, 60, 37, '#e8c9a0'); for (let y = 74; y < 108; y += 5) for (let x = SX - 30; x < SX + 30; x++) if (hash(x, y) > 0.6) g.set(x, y, '#d8b48a');
+  g.poly([[SX - 38, 73], [SX, 44], [SX + 38, 73]], OUT); g.poly([[SX - 35, 71], [SX, 47], [SX + 35, 71]], '#c0506a');
+  for (let x = SX - 34; x < SX + 34; x++) { const hy = 71 - (34 - Math.abs(x - SX)) * 24 / 34; for (let y = Math.floor(hy); y < hy + 3; y++) g.set(x, y, '#f4f8ff'); }
+  g.rect(SX - 4, 34, 8, 12, OUT); g.rect(SX - 3, 35, 6, 10, '#c0506a'); g.ellipse(SX, 40, 2.5, 3, '#ffd66e');
+  g.rect(SX - 6, 88, 12, 20, OUT); g.rect(SX - 5, 89, 10, 19, '#6b4a7a'); g.set(SX + 3, 98, '#ffd66e');
+  [[SX - 24, 80], [SX + 12, 80]].forEach(([wx, wy]) => { g.rect(wx - 1, wy - 1, 14, 11, OUT); g.rect(wx, wy, 12, 9, '#ffd66e'); g.rect(wx + 5, wy, 2, 9, '#8c6448'); });
+  // chalkboard sign outside school
+  g.rect(SX + 36, 92, 2, 26, OUT); g.rect(SX + 54, 92, 2, 26, OUT); g.rect(SX + 33, 82, 26, 16, OUT); g.rect(SX + 34, 83, 24, 14, '#2f5a4a');
+  const CH = { A: ['.X.', 'X.X', 'XXX', 'X.X', 'X.X'], B: ['XX.', 'X.X', 'XX.', 'X.X', 'XX.'], C: ['.XX', 'X..', 'X..', 'X..', '.XX'] };
+  ['A', 'B', 'C'].forEach((ch, i) => CH[ch].forEach((r, yy) => [...r].forEach((c, xx) => { if (c === 'X') g.set(SX + 37 + i * 6 + xx, 87 + yy, '#ffffff'); })));
+  // Crystal Caves (sealed by ice), at the right edge
+  const CX = 616;
+  for (let y = 54; y < 118; y++) for (let x = 584; x < OW; x++) { const d = Math.hypot((x - CX) / 40, (y - 118) / 64); if (d < 1) g.set(x, y, d > 0.92 ? OUT : '#4c4a92'); }
+  for (let y = 74; y < 118; y++) for (let x = 600; x < OW; x++) { const d = Math.hypot((x - CX) / 22, (y - 118) / 44); if (d < 1) g.set(x, y, '#1a1440'); }
+  [[598, 118, 12], [606, 118, 18], [628, 118, 15], [636, 118, 10], [592, 70, -8], [640, 66, -9]].forEach(([cx, cy, h]) => { const up = h > 0, hh = Math.abs(h); g.poly(up ? [[cx - 4, cy], [cx, cy - hh], [cx + 4, cy]] : [[cx - 3, cy], [cx, cy + hh], [cx + 3, cy]], OUT); g.poly(up ? [[cx - 3, cy], [cx, cy - hh + 2], [cx + 3, cy]] : [[cx - 2, cy], [cx, cy + hh - 2], [cx + 2, cy]], '#b9a4ff'); g.set(cx, up ? cy - hh + 4 : cy + 3, '#ffffff'); });
+
+  // ---------- Owls ----------
+  function owl(body, wing, size, opts) {
+    const o = opts || {}, n = size, s = new Sprite(n, n), k = n / 32, Ey = '#2a1a4a';
+    const S = v => v * k;
+    s.begin(); s.poly([[S(7), S(9)], [S(8), S(3)], [S(12), S(8)]], wing); s.poly([[S(25), S(9)], [S(24), S(3)], [S(20), S(8)]], wing);
+    s.begin(); s.ellipse(S(16), S(18), S(10), S(10.5), body);
+    s.begin(); s.ellipse(S(6.5), S(20), S(3.2), S(6), wing); s.ellipse(S(25.5), S(20), S(3.2), S(6), wing);
+    s.begin({ shade: false }); s.ellipse(S(11.5), S(15), S(4.2), S(4.2), o.face || '#fbfcff'); s.ellipse(S(20.5), S(15), S(4.2), S(4.2), o.face || '#fbfcff');
+    if (o.shawl) { s.begin(); s.poly([[S(6), S(21)], [S(26), S(21)], [S(22), S(29)], [S(16), S(31)], [S(10), S(29)]], o.shawl); s.begin({ shade: false }); for (let x = 8; x < 25; x += 2) s.px(S(x), S(22), '#ffb3da'); }
+    s.begin({ shade: false });
+    if (o.sleepy) { [[10, 15], [11, 16], [12, 16], [13, 15], [19, 15], [20, 16], [21, 16], [22, 15]].forEach(([x, y]) => s.px(S(x), S(y), Ey)); }
+    else { s.ellipse(S(11.5), S(15), S(2.4), S(2.8), Ey); s.ellipse(S(20.5), S(15), S(2.4), S(2.8), Ey); s.px(S(10.5), S(13.5), '#ffffff'); s.px(S(19.5), S(13.5), '#ffffff'); }
+    if (o.glasses) { for (let y = 8; y < 22; y++) for (let x = 5; x < 27; x++) { const a = Math.hypot(x + 0.5 - 11.5, y + 0.5 - 15), b = Math.hypot(x + 0.5 - 20.5, y + 0.5 - 15); if ((a > 4.3 && a < 5.4) || (b > 4.3 && b < 5.4)) s.px(S(x), S(y), '#d9b44a'); } s.px(S(16), S(14), '#d9b44a'); s.px(S(15), S(14), '#d9b44a'); }
+    s.poly([[S(14.5), S(18)], [S(17.5), S(18)], [S(16), S(21)]], '#f5a04a');
+    s.px(S(12), S(28), '#f5a04a'); s.px(S(13), S(28), '#f5a04a'); s.px(S(19), S(28), '#f5a04a'); s.px(S(20), S(28), '#f5a04a');
+    if (o.tuft) { s.px(S(15), S(7), wing); s.px(S(16), S(6), wing); s.px(S(17), S(7), wing); }
+    return s.finish();
+  }
+  const GRAN = { open: owl('#d9d2ee', '#b7aedb', 48, { glasses: true, shawl: '#a07ee0', tuft: true }), shut: owl('#d9d2ee', '#b7aedb', 48, { glasses: true, shawl: '#a07ee0', tuft: true, sleepy: true }) };
+  const OWLETS = [owl('#c9a27a', '#a8825c', 32, {}), owl('#c7c9de', '#a4a7c4', 32, { tuft: true }), owl('#f0d6a8', '#d4b483', 32, {})];
+  const OWLETS_SLEEPY = [owl('#c9a27a', '#a8825c', 32, { sleepy: true }), owl('#c7c9de', '#a4a7c4', 32, { tuft: true, sleepy: true }), owl('#f0d6a8', '#d4b483', 32, { sleepy: true })];
+
+  // ---------- Places ----------
+  const GRAN_X = 152, FIRE_X = FX, NEST_X = NX, SCHOOL_X = SX, CAVE_X = CX;
+  const PAGE_POS = { nest: [NX + 14, 44], fire: [FX + 30, 108], school: [SX + 46, 70] };
+  function hotspots(s) {
+    return [
+      { id: 'down', x0: 0, x1: 44, y0: 90, y1: 144, stand: 40 },
+      { id: 'grandma', x0: GRAN_X - 22, x1: GRAN_X + 22, y0: 80, y1: 132, stand: GRAN_X - 34 },
+      { id: 'house', x0: TX - 24, x1: TX + 24, y0: 30, y1: 116, stand: GRAN_X - 34 },
+      { id: 'fire', x0: FX - 26, x1: FX + 40, y0: 90, y1: 134, stand: FX - 44 },
+      { id: 'nest', x0: NX - 30, x1: NX + 30, y0: 14, y1: 118, stand: NX - 26 },
+      { id: 'school', x0: SX - 36, x1: SX + 60, y0: 34, y1: 118, stand: SX - 6 },
+      { id: 'caves', x0: 584, x1: OW, y0: 50, y1: 144, stand: 580 },
+    ];
+  }
+  const MIN_X = 30, maxX = () => 580;
+
+  // ---------- Dynamic render ----------
+  const FLAKES = Array.from({ length: 46 }, (_, k) => ({ x: hash(k, 61) * W, y: hash(k, 62) * H, sp: 0.15 + hash(k, 63) * 0.3, p: hash(k, 64) * 99 }));
+  const PAGE = ['XXXXXXX.', 'XooooXoX', 'XoLLooXX', 'XooooooX', 'XoLLLLoX', 'XooooooX', 'XoLLLooX', 'XooooooX', 'XXXXXXXX'];
+  function render(buf, t, s) {
+    V.drawSky(buf, t, sky);
+    const cam = s.cam | 0, put = V.putter(buf);
+    V.drawLayer(buf, g, cam);
+    // tree house window glow + chimney smoke
+    if ((t >> 4) % 3) { put(TX - 9 - cam, 55, '#fff3c4'); put(TX - 7 - cam, 57, '#fff3c4'); }
+    for (let k = 0; k < 5; k++) { const ph = (t * 0.4 + k * 13) % 60, x = TX + 31 - cam + Math.sin((ph + k * 9) / 8) * 3, y = 62 - ph * 0.7; if (y > 4) { put(x, y, '#cfc8ea'); put(x + 1, y, '#b8b0dc'); } }
+    // campfire flames
+    const sci = s.sci || {};
+    const fireOn = true;
+    if (fireOn) for (let k = 0; k < 26; k++) {
+      const ph = (t * 1.3 + k * 7) % 22, x = FX - cam - 8 + (k % 9) * 2 + Math.sin((t + k * 5) / 4) * 1.5, y = 120 - ph * 0.9 - (k % 3);
+      const hot = ph < 8 ? '#fff3a0' : ph < 14 ? '#ffb347' : '#ff6a4a';
+      if (ph < 19) { put(x, y, hot); if (ph < 10) put(x, y + 1, '#ffd66e'); }
+    }
+    for (let y = 98; y < 132; y++) for (let x = FX - 34; x < FX + 34; x++) { const d = Math.hypot((x - FX) / 34, (y - 120) / 14); if (d < 1 && d > 0.45 && dith(x + (t >> 2), y) < (1 - d) * 0.25) { const X = x - cam; if (X >= 0 && X < W) { const v = buf[y * W + X]; buf[y * W + X] = pack(mix(PX.toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), '#ffb347', 0.22)); } } }
+    // science: two snowballs (one by the fire, one out in the snow)
+    if (sci.on) {
+      const near = sci.near === undefined ? 1 : sci.near;
+      const nx = FX + 22 - cam;
+      if (near > 0.08) { const r = 5 * near; for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) { const d = Math.hypot(x, y * 1.05); if (d <= r) put(nx + x, 124 - r + y, d > r - 1 ? OUT : (x < 0 && y < 0 ? '#ffffff' : '#e6eeff')); } }
+      if (sci.puddle) { const pw = 6 + sci.puddle * 2; for (let x = -pw; x <= pw; x++) { put(sci.puddleX - cam + x, 126, sci.ice ? '#ffffff' : '#86c3f2'); put(sci.puddleX - cam + x, 127, sci.ice ? '#cfe9ff' : '#5fa7e0'); } if (sci.ice) { put(sci.puddleX - cam - 2, 125, '#ffffff'); put(sci.puddleX - cam + 3, 125, '#ffffff'); } }
+      const fx2 = FX + 50 - cam; for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) { const d = Math.hypot(x, y * 1.05); if (d <= 5) put(fx2 + x, 119 + y, d > 4 ? OUT : (x < 0 && y < 0 ? '#ffffff' : '#e6eeff')); }
+    }
+    // floating frozen pages still to find
+    const pages = s.pagesLeft || [];
+    pages.forEach((id, k) => {
+      const [px, py] = PAGE_POS[id], bob = Math.round(Math.sin((t + k * 20) / 12) * 2), ox = px - cam - 4, oy = py + bob;
+      PAGE.forEach((r, yy) => [...r].forEach((c, xx) => { if (c === '.') return; put(ox + xx, oy + yy, c === 'X' ? '#5fa7e0' : c === 'L' ? '#86c3f2' : '#eaf6ff'); }));
+      if ((t + k * 11) % 50 < 10) { put(ox - 2, oy - 2, '#ffffff'); put(ox + 9, oy + 1, '#ffffff'); }
+    });
+    // characters
+    const nest = { x: NX, draw(b) { if (s.storytime || s.school) return; [-12, 0, 12].forEach((dx, i) => { const spr = (s.owletsSleepy ? OWLETS_SLEEPY : OWLETS)[i], hop = ((t + i * 23) % 90) < 6 ? -2 : 0; V.blitAt(b, spr, NX + dx - cam - 16, 34 + hop); }); } };
+    const gran = { x: GRAN_X, draw(b, put2) {
+      const blink = (t % 160) < 7; V.blitAt(b, blink ? GRAN.shut : GRAN.open, GRAN_X - cam - 24, FEET - 46 + ((t % 90) < 45 ? 0 : 1));
+      if (s.ch2NeedsMeet && !s.talking) V.drawBubble(put2, GRAN_X - cam + 14, 74 + Math.round(Math.sin(t / 8) * 1.5));
+    } };
+    const npcs = [gran, nest];
+    if (s.storytime) [[GRAN_X + 26, 0], [GRAN_X + 44, 1], [GRAN_X + 62, 2]].forEach(([x, i]) => npcs.push({ x, draw(b) { const spr = (s.owletsSleepy ? OWLETS_SLEEPY : OWLETS)[i]; V.blitAt(b, spr, x - cam - 16, FEET - 30 + (((t + i * 17) % 70) < 5 ? -2 : 0)); } }));
+    if (s.school) [[SX + 22, 0], [SX + 40, 1], [SX + 58, 2]].forEach(([x, i]) => npcs.push({ x, draw(b) { V.blitAt(b, OWLETS[i], x - cam - 16, FEET - 30 + (s.school.speaker === i && (t % 16) < 8 ? -2 : 0)); } }));
+    V.drawActors(buf, t, s, cam, npcs, true);
+    V.drawOverlay(buf, t, s, cam);
+    FLAKES.forEach(f => { const y = (f.y + t * f.sp) % H, x = (f.x + Math.sin((t + f.p * 9) / 30) * 6 - cam * 0.3 + W * 4) % W; put(x, y, '#ffffff'); });
+  }
+
+  const api = { OW, WW: OW, FEET, MIN_X, maxX, hotspots, render, GRAN_X, FIRE_X, NEST_X, SCHOOL_X, CAVE_X, PAGE_POS, OWLETS };
+  if (typeof module !== 'undefined') module.exports = api; else root.OWLV = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -940,19 +1190,21 @@ body.spelling .talk { display: none; }
 
   // ---------- Dialogue ----------
   let talking = false, lastLine = '';
-  function talk(who, text) {
+  function talk(who, text, spoken) {
     return new Promise(res => {
       talking = true; talkEl.hidden = false; whoEl.textContent = who || ''; lineEl.textContent = text; choicesEl.innerHTML = ''; nextBtn.hidden = false;
-      lastLine = text; speak(text); nextBtn.focus({ preventScroll: true });
+      lastLine = spoken === undefined ? text : spoken; speak(lastLine); nextBtn.focus({ preventScroll: true });
       const go = () => { nextBtn.removeEventListener('click', go); lineEl.removeEventListener('click', go); res(); };
       nextBtn.addEventListener('click', go); lineEl.addEventListener('click', go);
     });
   }
-  function ask(who, text, options) {
+  // quiz = true: shuffle the answers and style them all alike, so the first (yellow) button never gives the answer away
+  function ask(who, text, options, spoken, quiz) {
     return new Promise(res => {
-      talking = true; talkEl.hidden = false; whoEl.textContent = who || ''; lineEl.textContent = text; nextBtn.hidden = true; lastLine = text; speak(text);
-      choicesEl.innerHTML = '';
-      options.forEach((o, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.textContent = o; b.addEventListener('click', () => res(i)); choicesEl.appendChild(b); });
+      talking = true; talkEl.hidden = false; whoEl.textContent = who || ''; lineEl.textContent = text; nextBtn.hidden = true; lastLine = spoken === undefined ? text : spoken; speak(lastLine);
+      choicesEl.innerHTML = ''; choicesEl.classList.toggle('quiz', !!quiz);
+      const order = options.map((o, i) => i); if (quiz) order.sort(() => Math.random() - 0.5);
+      order.forEach(i => { const o = options[i], b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.textContent = o; b.addEventListener('click', () => res(i)); choicesEl.appendChild(b); });
     });
   }
   function endTalk() { talking = false; talkEl.hidden = true; choicesEl.innerHTML = ''; if (save.companion) refreshGoal(); if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
@@ -962,7 +1214,7 @@ body.spelling .talk { display: none; }
   function drawHud() {
     if (!save.companion) { hudEl.hidden = true; return; }
     const c = CREATURES.find(x => x.id === save.companion), p = POWERS[save.companion];
-    hudEl.hidden = false; compChip.textContent = c.name;
+    hudEl.hidden = false; compChip.textContent = c.name + ((save.badges || []).length ? '  🏅' + save.badges.length : '');
     slotsEl.innerHTML = '';
     for (let i = 0; i < CONFIG.powerSlots; i++) {
       const full = !!save.powers[i] && save.powerCharge[i];
@@ -986,7 +1238,7 @@ body.spelling .talk { display: none; }
     if (P === 0) return { text: 'Wake your first power', x: V.SPOT_X, y: 62, say: S + ' can help us wake my very first ' + kind + ' power! Let\'s go and see him.' };
     if (save.fogStage < 3) return { text: 'Clear the snowy fog', x: st.fogX + 6, y: 56, say: 'Let\'s walk past the bakery to the snowy fog, and use my powers to clear it!' };
     if (!save.pipFriend) return { text: 'Help the lost owl', x: st.pip.x, y: 72, say: 'Someone is crying near the frozen pond. Let\'s go and see if they need help!' };
-    if (save.gateOpen) return { text: 'Owl Village: coming soon!', x: 1400, y: 40, say: 'Pip\'s home is up those snowy stairs! The next part of our adventure is coming very soon.' };
+    if (save.gateOpen) return ch2Goal();
     if (!save.keyQuest) return { text: 'Go to the Frost Gate', x: 1272, y: 24, say: 'Let\'s take Pip to the big icy gate at the end of the snowy path!' };
     const next = KEYS.find(k => !save.keyParts[k.id]);
     if (next) return { text: 'Key pieces ' + keyCount() + '/3', x: next.x, y: next.y, say: 'Let\'s find the next piece of the Snowflake Key. It\'s hidden at ' + next.name + '!' };
@@ -995,8 +1247,13 @@ body.spelling .talk { display: none; }
     return { text: 'Open the Frost Gate!', x: 1272, y: 24, say: 'We have the whole Snowflake Key and all four powers! Let\'s go and open the Frost Gate!' };
   }
   let goalText = '';
-  function showGuide() { const g = goal(); if (g && g.x != null) st.guide = { x: g.x, y: g.y, until: st.t + 330 }; }
+  function showGuide() {
+    const g = goal(); if (!g || g.x == null) return;
+    if ((g.map || 'village') === st.map) st.guide = { x: g.x, y: g.y, until: st.t + 330 };
+    else st.guide = st.map === 'owl' ? { x: 22, y: 80, until: st.t + 330 } : { x: 1400, y: 60, until: st.t + 330 };
+  }
   function refreshGoal() {
+    syncCh2();
     const g = goal(), el = $('goal');
     if (!g) { el.hidden = true; return; }
     el.hidden = false; $('goalText').textContent = g.text;
@@ -1005,7 +1262,8 @@ body.spelling .talk { display: none; }
   $('goal').addEventListener('click', async () => {
     if (talking || st.spelling || st.scene || st.mode !== 'village') return;
     const g = goal(); if (!g) return;
-    showGuide(); await talk(compInfo().name, g.say); endTalk(); showGuide();
+    const away = (g.map || 'village') !== st.map;
+    showGuide(); await talk(compInfo().name, (away ? (st.map === 'owl' ? 'First, let\'s go back down the snowy stairs. ' : 'First, let\'s climb the snowy stairs to Owl Village. ') : '') + g.say); endTalk(); showGuide();
   });
 
   // ---------- Game state ----------
@@ -1037,6 +1295,7 @@ body.spelling .talk { display: none; }
     st.mode = 'village'; const i = CREATURES.findIndex(x => x.id === save.companion);
     st.comp = { i, x: 76, tx: 76, face: 1, walking: false }; st.cam = 0; st.metSpot = save.metSpot; st.fogX = V.FOG_STOPS[save.fogStage];
     if (save.pipFriend) st.pip = { x: 46, mood: 'happy', follow: true, moving: false };
+    placeOnLoad();
     save.visits++; persist(); drawHud();
     const c = compInfo();
     setTimeout(async () => {
@@ -1139,7 +1398,7 @@ body.spelling .talk { display: none; }
     async snowman() {
       const c = compInfo(); st.comp.face = 1;
       await talk(c.name, 'A snowman! Someone must have built it.');
-      const a = await ask(c.name, 'How do you think the snowman feels?', ['😊 Happy', '😢 Sad', '😠 Cross']);
+      const a = await ask(c.name, 'How do you think the snowman feels?', ['😊 Happy', '😢 Sad', '😠 Cross'], undefined, true);
       logEmo('snowman', ['happy', 'sad', 'cross'][a], a === 0);
       await talk(c.name, a === 0 ? 'Yes! Look at its big smile. A smile usually means someone feels happy.' : 'Hmm, look at its mouth. It curves up into a big smile! A smile usually means someone feels happy.');
       endTalk();
@@ -1150,7 +1409,7 @@ body.spelling .talk { display: none; }
       await talk('Little owl', 'Hoo... hoo... I\'m lost. I can\'t find my way home, and it\'s so cold.');
       let feel = -1;
       for (let tries = 0; tries < 3; tries++) {
-        feel = await ask(c.name, 'How do you think the little owl is feeling?', ['😊 Happy', '😢 Sad', '😨 Scared']);
+        feel = await ask(c.name, 'How do you think the little owl is feeling?', ['😊 Happy', '😢 Sad', '😨 Scared'], undefined, true);
         logEmo('owl-feels', ['happy', 'sad', 'scared'][feel], feel !== 0);
         if (feel !== 0) break;
         await talk(c.name, 'Hmm, look at its face. It has tears, and it\'s shaking. Do you think it feels happy?');
@@ -1158,7 +1417,7 @@ body.spelling .talk { display: none; }
       await talk(c.name, feel === 0 ? 'I think the owl feels sad and scared. When we are lost, we can feel sad and scared at the same time.' : 'Yes! It feels ' + (feel === 1 ? 'sad' : 'scared') + '. When we are lost, we can feel sad and scared at the same time.');
       let help = -1;
       for (let tries = 0; tries < 3; tries++) {
-        help = await ask(c.name, 'What could we do to help it feel better?', ['🤗 Say we\'ll help', '🧣 Keep it warm', '🚶 Walk away']);
+        help = await ask(c.name, 'What could we do to help it feel better?', ['🤗 Say we\'ll help', '🧣 Keep it warm', '🚶 Walk away'], undefined, true);
         logEmo('owl-help', ['reassure', 'warm', 'walk-away'][help], help !== 2);
         if (help !== 2) break;
         await talk(c.name, 'Hmm. If we walk away, the owl would still be all alone. How do you think it would feel then?');
@@ -1198,13 +1457,7 @@ body.spelling .talk { display: none; }
       if (a !== 0) { await talk('Pip', 'Okay! Come back when you\'re ready.'); endTalk(); return; }
       endTalk(); openGate();
     },
-    async stairs() {
-      const c = compInfo(); st.comp.face = 1;
-      await talk('Pip', 'These stairs go all the way up to Owl Village. That\'s where my grandma lives!');
-      await talk(c.name, 'The stairs are still covered in deep snow. The owls are sweeping them clear for us.');
-      await talk(c.name, 'Our next adventure, in Owl Village, is coming very soon!');
-      endTalk();
-    },
+    async stairs() { await ch2Stairs(); },
   };
 
 
@@ -1258,7 +1511,7 @@ body.spelling .talk { display: none; }
   function spellWord(word, first, review) {
     return new Promise(resolve => {
       const ts = WORDS.tiles(word); let misses = 0, nones = 0, helped = false, busy = false;
-      tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = !!SR; micBtn.hidden = !SR; picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); buildEl.hidden = true; buildEl.innerHTML = ''; tilesEl.hidden = false; $('spellAgain').hidden = false;
+      resetCh2Panel(); tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = !!SR; micBtn.hidden = !SR; picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); buildEl.hidden = true; buildEl.innerHTML = ''; tilesEl.hidden = false; $('spellAgain').hidden = false;
       ts.forEach((t, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'tile' + (WORDS.VOWELS.includes(t) ? ' vowel' : ''); b.textContent = t;
         b.setAttribute('aria-label', 'Hear the sound ' + t);
@@ -1382,7 +1635,7 @@ body.spelling .talk { display: none; }
     await runWords(weakest(learnedWords(), 2).map(w => ({ w, review: true })));
     save.powerCharge = save.powers.map(() => true); persist(); drawHud();
     chime([523, 659, 784, 1046]); for (let k = 0; k < 3; k++) setTimeout(() => V.sparkle(st, st.comp.x, WORLD_Y(), POWERS[c.id].cols, 24), k * 200);
-    const nearFog = save.fogStage < 3 && st.comp.x > st.fogX - 80;
+    const nearFog = st.map !== 'owl' && save.fogStage < 3 && st.comp.x > st.fogX - 80;
     await talk(c.name, 'I feel it! All my powers are full again!' + (nearFog ? ' Tap a power to clear more fog!' : ''));
     endTalk();
   }
@@ -1486,7 +1739,11 @@ body.spelling .talk { display: none; }
   }
 
   // ---------- Story maths: bakery (taking away) and home (both) ----------
-  const ITEM = { bakery: { cls: 'bun', one: 'moon bun', many: 'moon buns' }, home: { cls: 'toy', one: 'toy', many: 'toys' } };
+  const ITEM = {
+    bakery: { cls: 'bun', one: 'moon bun', many: 'moon buns', sub: (q, w) => ['There are ' + q.a + ' ' + w(q.a) + ' on the tray.', 'A hungry bear buys ' + q.b + '.'], qSub: 'How many moon buns are left?' },
+    home: { cls: 'toy', one: 'toy', many: 'toys', add: (q, w) => ['There are ' + q.a + ' ' + w(q.a) + ' in the toy box.', (save.pipFriend ? 'Pip puts' : 'We put') + ' in ' + q.b + ' more.'], sub: (q, w) => ['There are ' + q.a + ' ' + w(q.a) + ' in the toy box.', 'We take ' + q.b + ' out to play with.'], qAdd: 'How many toys are in the box now?', qSub: 'How many toys are left in the box?' },
+    nest: { cls: 'owl', one: 'owlet', many: 'owlets', add: (q, w) => ['There ' + (q.a === 1 ? 'is ' : 'are ') + q.a + ' ' + w(q.a) + ' in the nest.', q.b + ' more ' + (q.b === 1 ? 'flies' : 'fly') + ' home.'], sub: (q, w) => ['There are ' + q.a + ' ' + w(q.a) + ' in the nest.', q.b + ' ' + (q.b === 1 ? 'flies' : 'fly') + ' down to the campfire.'], qAdd: 'How many owlets are in the nest now?', qSub: 'How many owlets are left in the nest?' },
+  };
   const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
   function pickFact(op) {
     const ids = [];
@@ -1506,19 +1763,10 @@ body.spelling .talk { display: none; }
       const cells = Array.from({ length: 10 }, (_, i) => i < q.a ? it.cls : '');
       numsEl.innerHTML = ''; looseEl.innerHTML = ''; looseEl.hidden = true; numsEl.hidden = true; drawItems(cells);
       frameEl.setAttribute('aria-label', q.a + ' ' + word(q.a));
-      if (place === 'bakery') {
-        await bsay('There are ' + q.a + ' ' + word(q.a) + ' on the tray.');
-        await bsay('A hungry bear buys ' + q.b + '.');
-        for (let j = 0; j < q.b; j++) { cells[q.a - 1 - j] = it.cls + ' gone'; drawItems(cells); chime([520 - j * 30], 'sine'); await wait(450); }
-      } else if (q.op === '+') {
-        await bsay('There are ' + q.a + ' ' + word(q.a) + ' in the toy box.');
-        await bsay((save.pipFriend ? 'Pip' : 'We') + ' put' + (save.pipFriend ? 's' : '') + ' in ' + q.b + ' more.');
-        for (let j = 0; j < q.b; j++) { cells[q.a + j] = it.cls + ' new'; drawItems(cells); chime([520 + j * 40], 'sine'); await wait(450); }
-      } else {
-        await bsay('There are ' + q.a + ' ' + word(q.a) + ' in the toy box.');
-        await bsay('We take ' + q.b + ' out to play with.');
-        for (let j = 0; j < q.b; j++) { cells[q.a - 1 - j] = it.cls + ' gone'; drawItems(cells); chime([520 - j * 30], 'sine'); await wait(450); }
-      }
+      const lines = (q.op === '-' ? it.sub : it.add)(q, word);
+      for (const l of lines) await bsay(l);
+      if (q.op === '-') for (let j = 0; j < q.b; j++) { cells[q.a - 1 - j] = it.cls + ' gone'; drawItems(cells); chime([520 - j * 30], 'sine'); await wait(450); }
+      else for (let j = 0; j < q.b; j++) { cells[q.a + j] = it.cls + ' new'; drawItems(cells); chime([520 + j * 40], 'sine'); await wait(450); }
       const finish = async strong => {
         SK.record(q.id, strong ? 'strong' : 'miss'); daily().bonds++; persist(); chime([784, 988, 1175, 1568]);
         await bsay(q.op === '-' ? q.a + ' take away ' + q.b + ' is ' + ans + '!' : q.a + ' and ' + q.b + ' make ' + ans + '!'); await wait(900); resolve(strong);
@@ -1537,7 +1785,7 @@ body.spelling .talk { display: none; }
         numsEl.appendChild(b);
       }
       numsEl.hidden = false;
-      await bsay(q.op === '-' && place === 'bakery' ? 'How many moon buns are left?' : q.op === '-' ? 'How many toys are left in the box?' : 'How many toys are in the box now?');
+      await bsay(q.op === '-' ? it.qSub : it.qAdd);
     });
   }
   async function runStory(place, n) {
@@ -1578,7 +1826,7 @@ body.spelling .talk { display: none; }
     await talk(c.name, 'Crash! The ice melted away. The Frost Gate is open!');
     await talk('Pip', 'Look! The snowy stairs up to Owl Village! I can see my grandma\'s lantern!');
     await talk('Pip', 'Thank you for being such a good friend. You read words, you counted, and you never gave up!');
-    await talk(c.name, 'Our next adventure begins up those stairs. It\'s coming very soon!');
+    await talk(c.name, 'Our next adventure begins up those stairs. Let\'s climb up to Owl Village!');
     endTalk(); showGuide();
   }
 
@@ -1587,13 +1835,15 @@ body.spelling .talk { display: none; }
   async function goodnight() {
     const c = compInfo(); st.sleepy = true;
     await talk(c.name, 'Yaaawn... I\'m getting really sleepy.');
-    await talk(c.name, 'Sleep helps our brains keep everything we learned today. Let\'s go home to bed!');
+    await talk(c.name, 'Sleep helps our brains keep everything we learned today. ' + (st.map === 'owl' ? 'Let\'s snuggle up in Grandma Hoot\'s cosy tree house!' : 'Let\'s go home to bed!'));
     endTalk();
-    st.comp.tx = 76; st.comp.walking = Math.abs(st.comp.x - 76) > 1; st.arrive = null;
+    const home = st.map === 'owl' ? OWLV.GRAN_X - 34 : 76;
+    st.comp.tx = home; st.comp.walking = Math.abs(st.comp.x - home) > 1; st.arrive = null;
     for (let i = 0; i < 400 && st.comp.walking; i++) await wait(50);
     const d = daily(), bits = [];
     if (d.words.length) bits.push('read ' + d.words.length + ' word' + (d.words.length === 1 ? '' : 's'));
-    if (d.bonds) bits.push('made ten ' + d.bonds + ' time' + (d.bonds === 1 ? '' : 's'));
+    if (d.pages) bits.push('read ' + d.pages + ' story page' + (d.pages === 1 ? '' : 's'));
+    if (d.bonds) bits.push('solved ' + d.bonds + ' number puzzle' + (d.bonds === 1 ? '' : 's'));
     await talk(c.name, bits.length ? 'Today you ' + bits.join(' and ') + '! I\'m so proud of you.' : 'Thank you for playing with me today!');
     await talk(c.name, 'Goodnight! See you tomorrow!');
     endTalk();
@@ -1606,7 +1856,7 @@ body.spelling .talk { display: none; }
     const c = compInfo(), p = POWERS[save.companion], kind = p.fx[i];
     if (!save.powerCharge[i]) { askRecharge(c); return; }
     chime([988, 1318, 1568, 1976], 'sine'); speak(p.names[i] + '!');
-    const nearFog = save.fogStage < 3 && st.comp.x > st.fogX - 80;
+    const nearFog = st.map !== 'owl' && save.fogStage < 3 && st.comp.x > st.fogX - 80;
     if (nearFog) st.comp.face = 1;
     addFx(kind, p);
     save.powerCharge[i] = false; persist(); drawHud();
@@ -1681,8 +1931,8 @@ body.spelling .talk { display: none; }
       return;
     }
     if (st.mode !== 'village' || talking || st.spelling || st.sleepy || st.scene) return;
-    const wx = sx + st.cam, hit = V.hotspots(st).find(h => wx >= h.x0 && wx < h.x1 && sy >= h.y0 && sy < h.y1);
-    const tx = Math.max(V.MIN_X, Math.min(V.maxX(st), hit ? hit.stand : wx));
+    const wx = sx + st.cam, hit = MP().hotspots(st).find(h => wx >= h.x0 && wx < h.x1 && sy >= h.y0 && sy < h.y1);
+    const tx = Math.max(MP().MIN_X, Math.min(MP().maxX(st), hit ? hit.stand : wx));
     st.comp.tx = tx; st.comp.walking = Math.abs(tx - st.comp.x) > 1; st.arrive = hit ? hit.id : null;
     if (!st.comp.walking && hit) { const id = st.arrive; st.arrive = null; SCRIPTS[id](); }
     chime([880], 'sine');
@@ -1699,7 +1949,7 @@ body.spelling .talk { display: none; }
     if (st.fogX < fogTarget) { st.fogX = Math.min(fogTarget, st.fogX + 2.2); if (st.t % 3 === 0) V.sparkle(st, st.fogX + 4, 60 + Math.random() * 70, POWERS[save.companion].cols, 3); }
     const p = st.pip;
     if (p.follow) { const want = c.x - 30 * (c.face || 1), dd = want - p.x; if (Math.abs(dd) > 3) { p.x += Math.sign(dd) * Math.min(Math.abs(dd), 2.1); p.moving = true; } else p.moving = false; }
-    const want = Math.max(0, Math.min(V.WW - W, c.x - W / 2));
+    const want = Math.max(0, Math.min(MP().WW - W, c.x - W / 2));
     st.cam += (want - st.cam) * 0.12; if (Math.abs(want - st.cam) < 0.5) st.cam = want;
     st.talking = talking;
     if (!st.sleepy && !talking && !st.spelling && save.sessionMin > 0 && st.sessionStart && Date.now() - st.sessionStart > save.sessionMin * 60000) goodnight();
@@ -1721,8 +1971,8 @@ body.spelling .talk { display: none; }
   function frame(now) {
     if (now - last >= 33) {
       last = now; st.t++; update();
-      if (st.mode === 'village') { V.renderVillage(buf, st.t, st); drawFx(); drawPops(); }
-      else if (st.mode === 'sleep') { V.renderVillage(buf, st.t, st); drawSleep(); }
+      if (st.mode === 'village') { MP().render(buf, st.t, st); drawFx(); drawPops(); }
+      else if (st.mode === 'sleep') { MP().render(buf, st.t, st); drawSleep(); }
       else renderChoose(buf, st.t, st.choose);
       ctx.putImageData(img, 0, 0);
     }
@@ -1791,11 +2041,13 @@ body.spelling .talk { display: none; }
     addGroup('Number bonds to 10', EASY.slice().sort((a, b) => a - b).map(k => ['b:' + k, k + ' + ' + (10 - k)]));
     const facts = Object.keys(save.skills).filter(k => /^[as]:/.test(k) && save.skills[k].seen).sort();
     if (facts.length) addGroup('Adding and taking away', facts.map(k => [k, k.slice(2).replace('-', ' − ').replace('+', ' + ')]));
+    progressCh2(addGroup, map);
     const key = document.createElement('p'); key.className = 'mapkey'; key.textContent = 'Grey: not started · Amber: learning · Green: mastered (answered alone on 2 separate days) · • due for review'; map.appendChild(key);
-    const dd = daily(); const td = document.createElement('p'); td.textContent = 'Today: ' + dd.words.length + ' words read, ' + dd.bonds + ' number bonds, ' + dd.lanterns + ' lantern' + (dd.lanterns === 1 ? '' : 's') + ' lit. Wishing Tree: ' + save.lit + ' of 10.'; map.appendChild(td);
+    const dd = daily(); const td = document.createElement('p'); td.textContent = 'Today: ' + dd.words.length + ' words read, ' + (dd.pages || 0) + ' story pages read, ' + dd.bonds + ' number bonds, ' + dd.lanterns + ' lantern' + (dd.lanterns === 1 ? '' : 's') + ' lit. Wishing Tree: ' + save.lit + ' of 10.'; map.appendChild(td);
     el.appendChild(map);
     const words = {}, sounds = {};
     save.log.forEach(e => {
+      if (!e.w) return;
       const w = words[e.w] || (words[e.w] = { read: 0, picked: 0, helped: 0, missed: 0, heard: [] });
       if (e.r === 'read') w.read++; else if (e.r === 'picked' || e.r === 'built') w.picked++; else if (e.r === 'helped' || e.r === 'grownup') w.helped++; else if (e.r === 'close' || e.r === 'miss' || e.r === 'pickmiss') { w.missed++; if (e.h && !w.heard.includes(e.h)) w.heard.push(e.h); }
       if (e.r === 'close' && e.p) sounds[e.p] = (sounds[e.p] || 0) + 1;
@@ -1808,7 +2060,7 @@ body.spelling .talk { display: none; }
     keys.forEach(k => { const w = words[k], tr = document.createElement('tr'); [k, w.read, w.picked, w.helped, w.missed, w.heard.join(', ') || '–'].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }); body.appendChild(tr); });
     tb.appendChild(body); wrap.appendChild(tb); el.appendChild(wrap);
     const sk = Object.keys(sounds).sort((a, b) => sounds[b] - sounds[a]);
-    if (save.emo.length) { const fe = document.createElement('p'); const names = { snowman: 'Snowman\'s feeling', 'owl-feels': 'How Pip felt', 'owl-help': 'How to help Pip' }; fe.textContent = 'Feelings answers: ' + save.emo.map(e => (names[e.q] || e.q) + ': ' + e.a + (e.ok ? ' ✓' : ' (talked through)')).join('; '); el.appendChild(fe); }
+    if (save.emo.length) { const fe = document.createElement('p'); const names = { snowman: 'Snowman\'s feeling', 'owl-feels': 'How Pip felt', 'owl-help': 'How to help Pip', 'grandma-lost': 'How Grandma felt while Pip was lost', 'grandma-home': 'How Grandma felt when Pip came home', 'sci-melt': 'Science guess, snowball by the fire', 'sci-freeze': 'Science guess, water in the cold' }; fe.textContent = 'Feelings answers: ' + save.emo.map(e => (names[e.q] || e.q) + ': ' + e.a + (e.ok ? ' ✓' : ' (talked through)')).join('; '); el.appendChild(fe); }
     const note = document.createElement('p'); note.textContent = sk.length ? 'Sounds to practise: ' + sk.map(k => '"' + k + '" (' + sounds[k] + ')').join(', ') : 'No tricky sounds spotted yet.'; el.appendChild(note);
   }
   resetBtn.addEventListener('click', () => {
@@ -1816,6 +2068,527 @@ body.spelling .talk { display: none; }
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     location.reload();
   });
+
+  // ======================= Chapter 2: Owl Village =======================
+  // (inserted into game.js at build time, so it shares the game's helpers)
+  const OWL = OWLV;
+  const VMAP = { render: V.renderVillage, hotspots: V.hotspots, maxX: V.maxX, MIN_X: V.MIN_X, WW: V.WW };
+  const OMAP = { render: OWL.render, hotspots: OWL.hotspots, maxX: OWL.maxX, MIN_X: OWL.MIN_X, WW: OWL.WW };
+  function MP() { return st.map === 'owl' ? OMAP : VMAP; }
+
+  if (!save.map) save.map = 'village';
+  if (!save.badges) save.badges = [];
+  if (!save.ch2) save.ch2 = { visited: false, met: false, pages: {}, story: false, sci: false, lessons: 0, tricky: {} };
+  if (!save.quests) save.quests = [];
+  st.map = save.map;
+  const GRAN = 'Grandma Hoot', OWLET_NAMES = ['Hoo', 'Tuft', 'Puff'];
+
+  // Each frozen page is one sentence. Pictures for the fallback swap one thing at a time, so she has to read both nouns.
+  const PAGES = [
+    { id: 'nest', text: 'The fox is on the bed.', subj: 'fox', place: 'bed', alts: [['dog', 'bed'], ['fox', 'ship']], nouns: ['fox', 'bed'] },
+    { id: 'fire', text: 'A dog was on the ship.', subj: 'dog', place: 'ship', alts: [['fox', 'ship'], ['dog', 'bed']], nouns: ['dog', 'ship'] },
+    { id: 'school', text: 'My pig is in the cup!', subj: 'pig', place: 'cup', alts: [['fish', 'cup'], ['pig', 'bed']], nouns: ['pig', 'cup'] },
+  ];
+  const PAGE_PLACE = { nest: ['the owlets\' nest', OWL.NEST_X, 20], fire: ['the campfire', OWL.FIRE_X, 86], school: ['Owl School', OWL.SCHOOL_X, 26] };
+  // Tricky words can't be sounded out, so they're learned by sight. `mark` = which letters are the tricky part.
+  const TRICKY = {
+    the: { hint: 'The e is the tricky part.', mark: [2], confuse: ['he', 'they'] },
+    is: { hint: 'The s makes a zzz sound.', mark: [1], confuse: ['it', 'his'] },
+    a: { hint: 'On its own, a says uh.', mark: [0], confuse: ['at', 'and'] },
+    was: { hint: 'The a makes an o sound.', mark: [1], confuse: ['saw', 'wash'] },
+    my: { hint: 'The y makes an eye sound, like in sky.', mark: [1], confuse: ['me', 'may'] },
+  };
+  const TRICKY_ORDER = ['the', 'is', 'a', 'was', 'my'];
+  const bare = w => w.toLowerCase().replace(/[^a-z']/g, '');
+  const isTricky = w => !!TRICKY[bare(w)];
+
+  const BADGES = [
+    { id: 'snowflake', icon: '❄️', name: 'Frost Gate Hero', how: 'Opened the Frost Gate with Pip' },
+    { id: 'scientist', icon: '🔬', name: 'Little Scientist', how: 'Did a melting and freezing experiment' },
+    { id: 'teacher', icon: '🍎', name: 'Super Teacher', how: 'Taught a lesson at Owl School' },
+    { id: 'story', icon: '📖', name: 'Story Keeper', how: 'Saved Grandma Hoot\'s storybook' },
+    { id: 'evolve', icon: '✨', name: '???', how: 'A secret, hidden in the Crystal Caves' },
+  ];
+
+  function syncCh2() {
+    st.pagesLeft = save.ch2.met ? PAGES.filter(p => !save.ch2.pages[p.id]).map(p => p.id) : [];
+    st.ch2NeedsMeet = !save.ch2.met;
+  }
+  function placeOnLoad() {
+    st.map = save.map || 'village';
+    if (st.map === 'owl') { st.comp.x = st.comp.tx = OWL.GRAN_X - 34; st.pip.x = st.comp.x - 28; }
+    else if (save.pipFriend) st.pip.x = st.comp.x - 30;
+    st.cam = Math.max(0, Math.min(MP().WW - W, st.comp.x - W / 2));
+  }
+  function ch2Goal() {
+    const c2 = save.ch2, G = OWL.GRAN_X;
+    if (!c2.met) return { map: 'owl', text: 'Meet Pip\'s grandma', x: G, y: 62, say: 'Pip\'s grandma lives in the big tree house in Owl Village. Let\'s go and say hello!' };
+    const left = PAGES.filter(p => !c2.pages[p.id]);
+    if (left.length) { const [name, x, y] = PAGE_PLACE[left[0].id]; return { map: 'owl', text: 'Frozen pages ' + (3 - left.length) + '/3', x, y, say: 'Let\'s find the next frozen page. It\'s at ' + name + '!' }; }
+    if (!c2.story) return { map: 'owl', text: 'Story time with Grandma', x: G, y: 62, say: 'We found all three pages! Let\'s take them to Grandma Hoot for story time.' };
+    return { map: 'owl', text: 'Crystal Caves: coming soon!', x: OWL.CAVE_X, y: 44, say: 'Grandma says the secret of growing into a new form is hidden in the Crystal Caves. That adventure is coming very soon!' };
+  }
+
+  // ---------- Overlays: fade, cards, badge book ----------
+  const fadeEl = $('fade'), cardEl = $('card'), bookEl = $('badgeBook');
+  function showCard(icon, title, body, btn) {
+    return new Promise(res => {
+      $('cardIcon').textContent = icon; $('cardTitle').textContent = title; $('cardBody').textContent = body; $('cardBtn').textContent = btn || 'Yay!';
+      cardEl.hidden = false; speak(title + '! ' + body); $('cardBtn').focus({ preventScroll: true });
+      $('cardBtn').onclick = () => { cardEl.hidden = true; res(); };
+    });
+  }
+  async function award(id) {
+    if (save.badges.includes(id)) return;
+    save.badges.push(id); persist(); drawHud();
+    const b = BADGES.find(x => x.id === id);
+    chime([784, 988, 1175, 1568, 2093]);
+    await showCard(b.icon, 'New badge: ' + b.name, b.how + '. Tap ' + compInfo().name + '\'s name at the top to see all your badges.', 'Yay!');
+  }
+  function drawBook() {
+    const el = $('bookGrid'); el.innerHTML = '';
+    BADGES.forEach(b => {
+      const got = save.badges.includes(b.id), d = document.createElement('div'); d.className = 'medal' + (got ? ' got' : '');
+      const i = document.createElement('span'); i.className = 'micon'; i.textContent = got ? b.icon : '?';
+      const n = document.createElement('b'); n.textContent = got ? b.name : 'Not yet';
+      const h = document.createElement('small'); h.textContent = got ? b.how : 'Keep playing to find this one!';
+      d.append(i, n, h); el.appendChild(d);
+    });
+  }
+  compChip.addEventListener('click', () => { if (st.mode === 'start' || st.mode === 'choose') return; drawBook(); bookEl.hidden = false; $('bookClose').focus({ preventScroll: true }); speak('Your badges!'); });
+  $('bookClose').addEventListener('click', () => { bookEl.hidden = true; });
+
+  async function travel(to) {
+    st.scene = true; fadeEl.hidden = false; void fadeEl.offsetWidth; fadeEl.classList.add('on'); chime(to === 'owl' ? [523, 659, 784, 1046] : [1046, 784, 659, 523], 'sine'); await wait(500);
+    st.map = to; save.map = to; persist();
+    st.comp.x = st.comp.tx = to === 'owl' ? 56 : 1350; st.comp.face = to === 'owl' ? 1 : -1; st.comp.walking = false; st.arrive = null;
+    st.pip.x = st.comp.x + (to === 'owl' ? -28 : 28); st.parts = []; st.fx = []; st.guide = null;
+    st.cam = Math.max(0, Math.min(MP().WW - W, st.comp.x - W / 2));
+    refreshGoal(); fadeEl.classList.remove('on'); await wait(500); fadeEl.hidden = true; st.scene = false;
+  }
+  async function ch2Stairs() {
+    const c = compInfo(); st.comp.face = 1;
+    const a = await ask('Pip', save.ch2.visited ? 'Shall we climb back up to Owl Village?' : 'These snowy stairs go all the way up to Owl Village. Shall we climb up?', ['Yes!', 'Not yet']);
+    endTalk(); if (a !== 0) return;
+    await travel('owl');
+    if (!save.ch2.visited) {
+      save.ch2.visited = true; persist();
+      await talk(c.name, 'Wow! Owl Village! Look at the beautiful colours dancing in the sky!');
+      await talk('Pip', 'That\'s the aurora! It glows on the coldest, clearest nights.');
+      await talk('Pip', 'And that big tree is my grandma\'s house! Come on, let\'s go and see her!');
+      endTalk(); showGuide();
+    }
+  }
+
+  // ---------- The spell panel, reused for pages, tricky words and lessons ----------
+  const spicEl = $('spic'), judgeEl = $('judge'), contBtn = $('contBtn');
+  function resetCh2Panel() { spicEl.hidden = true; spicEl.innerHTML = ''; judgeEl.hidden = true; judgeEl.innerHTML = ''; contBtn.hidden = true; tilesEl.classList.remove('sentence', 'card'); }
+  function openPanel() { st.spelling = true; document.body.classList.add('spelling'); spellEl.hidden = false; }
+  function closePanel() { spellEl.hidden = true; document.body.classList.remove('spelling'); st.spelling = false; resetCh2Panel(); }
+  function hideWordBits() { micBtn.hidden = true; helpBtn.hidden = true; otherEl.hidden = true; grownEl.hidden = true; picsEl.hidden = true; picsEl.innerHTML = ''; buildEl.hidden = true; buildEl.innerHTML = ''; picEl.hidden = true; }
+  function waitCont(label) { return new Promise(res => { contBtn.textContent = label || '▶ Next'; contBtn.hidden = false; contBtn.focus({ preventScroll: true }); contBtn.onclick = () => { contBtn.hidden = true; res(); }; }); }
+
+  function scenePic(subj, place, frost) {
+    const cv2 = document.createElement('canvas'); cv2.width = 24; cv2.height = 26;
+    const g2 = cv2.getContext('2d'), id = g2.createImageData(24, 26), u = new Uint32Array(id.data.buffer);
+    const put = (ic, ox, oy) => { if (!ic) return; for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const v = ic.data[y * 16 + x]; if (v) u[(y + oy) * 24 + x + ox] = v; } };
+    put(WORDS.icon(place), 4, 10); put(WORDS.icon(subj), 4, 0);
+    if (frost) for (let i = 0; i < u.length; i++) {
+      const x = i % 24, y = (i / 24) | 0, v = u[i];
+      const base = v ? PX.mix(PX.toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), '#e6f4ff', 0.9) : (V.dith(x, y) < 0.5 ? '#cfe9ff' : '#bfe0fb');
+      u[i] = PX.pack((x + y * 2) % 11 === 0 || (x * 3 - y) % 17 === 0 ? '#ffffff' : base);
+    }
+    g2.putImageData(id, 0, 0); return cv2;
+  }
+  function scoreSentence(page, alts) {
+    const target = page.text.split(' ').map(bare);
+    let best = { ok: false, ratio: -1, missing: target.slice(), heard: '' };
+    alts.forEach(a => {
+      const got = clean(a).split(' '), pool = got.slice(), missing = [];
+      target.forEach(w => { const i = pool.indexOf(w); if (i >= 0) pool.splice(i, 1); else missing.push(w); });
+      const ratio = 1 - missing.length / target.length, ok = page.nouns.every(n => got.includes(n)) && ratio >= 0.6;
+      if ((ok && !best.ok) || (ok === best.ok && ratio > best.ratio)) best = { ok, ratio, missing, heard: clean(a) };
+    });
+    return best;
+  }
+  function logPage(id, r) { save.log.push({ s: id, r, d: today() }); if (save.log.length > 600) save.log.splice(0, save.log.length - 600); persist(); }
+
+  // Read one frozen page aloud. Resolves true once the ice melts.
+  function readSentence(page, story) {
+    return new Promise(resolve => {
+      const words = page.text.split(' ');
+      let misses = 0, nones = 0, helped = false, busy = false;
+      resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.hidden = false; tilesEl.classList.add('sentence');
+      spicEl.hidden = false; spicEl.innerHTML = ''; spicEl.appendChild(scenePic(page.subj, page.place, true));
+      micBtn.hidden = !SR; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); grownEl.hidden = !!SR; $('spellAgain').hidden = false;
+      const tileEls = words.map(wd => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'wtile' + (isTricky(wd) ? ' tricky' : ''); b.textContent = wd;
+        b.setAttribute('aria-label', isTricky(wd) ? 'Tricky word: hear it' : 'Hear the sounds in ' + bare(wd));
+        b.addEventListener('click', async () => {
+          b.classList.remove('glow');
+          if (isTricky(wd)) { speak(bare(wd)); return; }
+          for (const t of WORDS.tiles(bare(wd))) { await playSound(t); await wait(120); }
+        });
+        tilesEl.appendChild(b); return b;
+      });
+      sayMsg(story ? 'Read this page out loud!' : 'This page is frozen! Read it out loud to melt the ice.');
+      const finish = async r => {
+        if (busy) return; busy = true;
+        hideWordBits(); tilesEl.hidden = false;
+        if (r === 'skip') { logPage(page.id, 'skip'); sayMsg('That\'s okay! The page will wait for us. Let\'s try again another time.'); await wait(1800); resolve(false); return; }
+        logPage(page.id, r);
+        SK.record('p:' + page.id, r === 'read' ? 'strong' : 'ok'); const dd = daily(); dd.pages = (dd.pages || 0) + 1; persist();
+        if (r === 'read') words.filter(isTricky).forEach(wd => SK.record('t:' + bare(wd), 'strong'));
+        spicEl.innerHTML = ''; const clear = scenePic(page.subj, page.place, false); clear.className = 'thaw'; spicEl.appendChild(clear);
+        tilesEl.classList.add('win'); setTimeout(() => tilesEl.classList.remove('win'), 700);
+        chime([784, 988, 1175, 1568]); V.sparkle(st, st.comp.x, WORLD_Y(), POWERS[save.companion].cols, 26);
+        const praise = ['The ice melted!', 'Brilliant reading!', 'You did it!'][Math.floor(Math.random() * 3)];
+        spellMsg = praise + ' ' + page.text; msgEl.textContent = praise; await speak(praise); await speak(page.text);
+        await wait(900); resolve(true);
+      };
+      micBtn.onclick = async () => {
+        if (busy) return;
+        micBtn.disabled = true; micBtn.textContent = '👂 Listening…'; micBtn.dataset.on = 'true';
+        const res = await listen();
+        micBtn.disabled = false; micBtn.textContent = '🎤 Read it!'; micBtn.dataset.on = 'false';
+        if (res.error === 'not-allowed' || res.error === 'service-not-allowed') { sayMsg('I can\'t use the microphone. Read it to a grown-up instead!'); grownEl.hidden = false; return; }
+        if (!res.alts.length) { nones++; sayMsg('My ears didn\'t catch that! Try again, or pick another way.'); otherEl.classList.add('nudge'); if (nones >= 2) grownEl.hidden = false; return; }
+        const sc = scoreSentence(page, res.alts);
+        if (sc.ok) { finish(helped ? 'helped' : 'read'); return; }
+        misses++; logPage(page.id, 'miss');
+        const miss = page.nouns.find(n => sc.missing.includes(n)) || sc.missing[0];
+        const idx = words.findIndex(wd => bare(wd) === miss);
+        tileEls.forEach((b, i) => b.classList.toggle('glow', i === idx));
+        if (miss && TRICKY[miss]) sayMsg('So close! This one is a tricky word. Tap it to hear it, then read the page again.');
+        else sayMsg('So close! Let\'s look at the glowing word again. Tap it to hear its sounds.');
+        helpBtn.hidden = false; otherEl.classList.add('nudge');
+        if (misses >= 2) grownEl.hidden = false;
+      };
+      helpBtn.onclick = async () => {
+        if (busy) return; helped = true; logPage(page.id, 'hint');
+        msgEl.textContent = 'Listen, then you read it!';
+        for (let i = 0; i < tileEls.length; i++) { tileEls[i].classList.add('reading'); await speak(bare(words[i])); tileEls[i].classList.remove('reading'); }
+        spellMsg = 'Now you read it!'; msgEl.textContent = spellMsg; speak(spellMsg);
+      };
+      picBtn.onclick = () => {
+        if (busy) return;
+        hideWordBits(); picsEl.hidden = false; picsEl.innerHTML = '';
+        spellMsg = 'Read the page. Which picture matches?'; msgEl.textContent = spellMsg; speak(spellMsg);
+        const opts = [[page.subj, page.place]].concat(page.alts).sort(() => Math.random() - 0.5); let wrong = 0;
+        opts.forEach(([sj, pl]) => {
+          const ok = sj === page.subj && pl === page.place, b = document.createElement('button'); b.type = 'button'; b.className = 'picopt scene';
+          b.setAttribute('aria-label', 'Picture ' + (opts.findIndex(o => o[0] === sj && o[1] === pl) + 1)); b.appendChild(scenePic(sj, pl, false));
+          b.addEventListener('click', () => {
+            if (busy) return;
+            if (ok) { finish(helped || wrong >= 2 ? 'helped' : 'picked'); return; }
+            wrong++; logPage(page.id, 'pickmiss'); b.disabled = true; b.classList.add('nope'); chime([330, 262], 'sine');
+            if (wrong >= 2) { [...picsEl.children].forEach(x => { if (!x.disabled) x.classList.add('glow'); }); spellMsg = 'This one matches! Tap the glowing picture.'; msgEl.textContent = spellMsg; speak(spellMsg); }
+            else { spellMsg = 'Not quite! Look at the words again. Who is it, and where are they?'; msgEl.textContent = spellMsg; speak(spellMsg); }
+          });
+          picsEl.appendChild(b);
+        });
+      };
+      buildBtn.onclick = () => {
+        if (busy) return;
+        hideWordBits(); buildEl.hidden = false; buildEl.innerHTML = ''; tilesEl.hidden = true;
+        spicEl.innerHTML = ''; spicEl.appendChild(scenePic(page.subj, page.place, false));
+        const slots = document.createElement('div'); slots.className = 'slots-row words';
+        words.forEach(() => { const d = document.createElement('div'); d.className = 'slotbox wslot'; slots.appendChild(d); });
+        const pool = document.createElement('div'); pool.className = 'pool';
+        let next = 0, wrong = 0;
+        const order = words.map((wd, i) => ({ wd, i })).sort(() => Math.random() - 0.5);
+        order.forEach(o => {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'wtile' + (isTricky(o.wd) ? ' tricky' : ''); b.textContent = bare(o.wd);
+          b.addEventListener('click', async () => {
+            if (busy || b.disabled) return;
+            if (bare(o.wd) === bare(words[next])) {
+              b.disabled = true; b.classList.add('used'); slots.children[next].textContent = words[next]; slots.children[next].classList.add('filled'); next++;
+              if (next === words.length) { await wait(600); finish(helped || wrong >= 3 ? 'helped' : 'built'); }
+            } else {
+              wrong++; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); chime([330, 262], 'sine');
+              if (wrong >= 2) [...pool.children].forEach(x => x.classList.toggle('glow', !x.disabled && bare(x.textContent) === bare(words[next])));
+            }
+          });
+          pool.appendChild(b);
+        });
+        buildEl.append(slots, pool);
+        spellMsg = 'Put the words in order to match the picture! The first word starts with a capital letter.'; msgEl.textContent = 'Put the words in order to match the picture!'; speak(spellMsg);
+      };
+      $('gOk').onclick = () => finish(helped ? 'helped' : 'grownup');
+      $('gSkip').onclick = () => finish('skip');
+    });
+  }
+
+  // First meeting with a tricky word: see it, hear it, say it.
+  async function introTricky(word) {
+    const T = TRICKY[word];
+    resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.hidden = false; tilesEl.classList.add('card');
+    [...word].forEach((ch, i) => { const b = document.createElement('span'); b.className = 'tile' + (T.mark.includes(i) ? ' trickpart' : ''); b.textContent = ch; tilesEl.appendChild(b); });
+    msgEl.textContent = '⭐ A new tricky word!';
+    await speak('Here\'s a new tricky word. It says ' + word + '. We can\'t sound it out, so we remember it by sight. ' + T.hint);
+    spellMsg = 'Say it with me: ' + word + '!'; msgEl.textContent = 'Say it with me: ' + word + '!'; await speak(spellMsg);
+    save.ch2.tricky[word] = true; SK.get('t:' + word); persist();
+    await waitCont('I said it! ▶');
+  }
+  async function introNewTrickyIn(text) {
+    const fresh = [...new Set(text.split(' ').map(bare).filter(w => TRICKY[w] && !save.ch2.tricky[w]))];
+    for (const w of fresh) await introTricky(w);
+  }
+  async function runPage(id) {
+    const page = PAGES.find(p => p.id === id);
+    openPanel();
+    await introNewTrickyIn(page.text);
+    const ok = await readSentence(page);
+    closePanel();
+    if (!ok) return false;
+    save.ch2.pages[id] = true; persist(); refreshGoal();
+    const c = compInfo(), n = PAGES.filter(p => save.ch2.pages[p.id]).length;
+    await talk(c.name, 'We saved a page of Grandma Hoot\'s storybook! That\'s ' + n + ' of 3.');
+    if (n < 3) { const next = PAGES.find(p => !save.ch2.pages[p.id]); await talk('Pip', 'The next page is at ' + PAGE_PLACE[next.id][0] + '!'); }
+    else await talk('Pip', 'That\'s all three! Let\'s take them to Grandma for story time!');
+    endTalk(); showGuide();
+    return true;
+  }
+
+  // ---------- Owl School: she is the teacher ----------
+  async function runSchool() {
+    const c = compInfo();
+    st.school = { speaker: -1 };
+    await talk(c.name, 'Owl School! The owlets are learning tricky words today.');
+    await talk('Pip', 'Their teacher had to fly home early. Will you be the teacher? Please?');
+    endTalk();
+    openPanel();
+    const fresh = TRICKY_ORDER.filter(w => !save.ch2.tricky[w]).slice(0, save.ch2.lessons ? 1 : 2);
+    for (const w of fresh) await introTricky(w);
+    const known = TRICKY_ORDER.filter(w => save.ch2.tricky[w]);
+    const cards = SK.pick(known.map(w => 't:' + w), 4).map(id => id.slice(2));
+    while (cards.length < 4) cards.push(known[cards.length % known.length]);
+    const truth = cards.map((_, i) => i % 2 === 0); truth.sort(() => Math.random() - 0.5);
+    resetCh2Panel(); hideWordBits();
+    msgEl.textContent = 'You\'re the teacher! Listen to each owlet. Did they read the word right?';
+    await speak('You\'re the teacher! Each owlet will read a word. Tap the tick if they get it right, or the cross if they make a mistake.');
+    let score = 0;
+    for (let i = 0; i < cards.length; i++) {
+      const word = cards[i], right = truth[i], who = i % 3, said = right ? word : TRICKY[word].confuse[Math.floor(Math.random() * 2)];
+      st.school.speaker = who;
+      resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.hidden = false; tilesEl.classList.add('card');
+      const big = document.createElement('span'); big.className = 'tile wordcard'; big.textContent = word; tilesEl.appendChild(big);
+      msgEl.textContent = OWLET_NAMES[who] + ' says: "' + said + '"'; spellMsg = OWLET_NAMES[who] + ' says... ' + said;
+      await speak(spellMsg + '?');
+      const judged = await new Promise(res => {
+        judgeEl.hidden = false; judgeEl.innerHTML = '';
+        [['✓ Right!', true, 'yes'], ['✗ Not quite', false, 'no']].forEach(([label, val, cls]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'jbtn ' + cls; b.textContent = label; b.addEventListener('click', () => res(val)); judgeEl.appendChild(b); });
+      });
+      judgeEl.hidden = true;
+      if (judged && right) { score++; SK.record('t:' + word, 'strong'); chime([784, 988, 1175]); await speak('Yes! Well done, teacher. It says ' + word + '.'); }
+      else if (!judged && right) { SK.record('t:' + word, 'miss'); chime([330, 262], 'sine'); msgEl.textContent = 'This word says "' + word + '"'; await speak('Hmm, I think ' + OWLET_NAMES[who] + ' was right this time! This word says ' + word + '. ' + TRICKY[word].hint); }
+      else if (judged && !right) { SK.record('t:' + word, 'miss'); chime([330, 262], 'sine'); msgEl.textContent = 'This word says "' + word + '", not "' + said + '"'; await speak('Oh! Look again. ' + OWLET_NAMES[who] + ' said ' + said + ', but this word says ' + word + '. ' + TRICKY[word].hint); }
+      else {
+        chime([659, 784]); await speak('Good spotting! What does it really say?');
+        const r = await correctIt(word, said);
+        if (r) score++;
+      }
+      await wait(500);
+    }
+    st.school.speaker = -1;
+    closePanel();
+    save.ch2.lessons++; persist();
+    await talk(OWLET_NAMES[0], score >= 3 ? 'Thank you, teacher! You\'re the best teacher ever!' : 'Thank you, teacher! We learned so much today!');
+    endTalk();
+    if (!save.badges.includes('teacher')) await award('teacher');
+    st.school = null;
+    if (!save.ch2.pages.school) {
+      await talk('Pip', 'Look! There\'s something frozen stuck to the chalkboard. It\'s one of Grandma\'s pages!');
+      endTalk(); await runPage('school');
+    }
+  }
+  // After she spots a mistake: she reads the word herself, or picks the right word by ear.
+  function correctIt(word, said) {
+    return new Promise(async res => {
+      resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.classList.add('card');
+      const big = document.createElement('span'); big.className = 'tile wordcard'; big.textContent = word; tilesEl.appendChild(big);
+      msgEl.textContent = 'What does it really say?'; spellMsg = 'What does it really say?';
+      micBtn.hidden = !SR; judgeEl.hidden = false; judgeEl.innerHTML = '';
+      const done = async (strong, okOrMiss) => { micBtn.hidden = true; judgeEl.hidden = true; SK.record('t:' + word, okOrMiss || (strong ? 'strong' : 'miss')); if (strong || okOrMiss === 'ok') { chime([784, 988, 1175]); await speak('Yes! It says ' + word + '. Thank you, teacher!'); } res(strong || okOrMiss === 'ok'); };
+      const opts = [word, said].sort(() => Math.random() - 0.5);
+      const lab = document.createElement('span'); lab.className = 'jlab'; lab.textContent = SR ? 'Or tap the one that sounds right:' : 'Tap the one that sounds right:'; judgeEl.appendChild(lab);
+      opts.forEach((o, i) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'jbtn ear'; b.textContent = '🔊 ' + (i + 1);
+        let heard = false;
+        b.addEventListener('click', async () => {
+          if (!heard) { heard = true; b.classList.add('heard'); await speak(o); b.textContent = '👉 Pick ' + (i + 1); return; }
+          if (o === word) done(false, 'ok'); else { chime([330, 262], 'sine'); msgEl.textContent = 'This word says "' + word + '"'; await speak('That one says ' + said + '. This word says ' + word + '.'); done(false); }
+        });
+        judgeEl.appendChild(b);
+      });
+      micBtn.onclick = async () => {
+        micBtn.disabled = true; micBtn.textContent = '👂 Listening…'; micBtn.dataset.on = 'true';
+        const r = await listen(); micBtn.disabled = false; micBtn.textContent = '🎤 Read it!'; micBtn.dataset.on = 'false';
+        if (r.alts.some(a => clean(a).split(' ').includes(word))) done(true);
+        else if (!r.alts.length) { msgEl.textContent = 'My ears didn\'t catch that! Try again, or tap a sound button.'; speak(msgEl.textContent); }
+        else { msgEl.textContent = 'Hmm, not quite. Tap the sound buttons to hear each one.'; speak(msgEl.textContent); }
+      };
+      await speak(SR ? 'Read it out loud for the owlets! Or tap a sound button to hear it, then tap it again to choose.' : 'Tap a sound button to hear it. Tap it again to choose it.');
+    });
+  }
+
+  // ---------- Snow science by the campfire ----------
+  async function anim(ms, step) { const t0 = performance.now(); await new Promise(r => { (function tick() { const k = Math.min(1, (performance.now() - t0) / ms); step(k); if (k < 1) requestAnimationFrame(tick); else r(); })(); }); }
+  async function runScience() {
+    const c = compInfo(), FX = OWL.FIRE_X;
+    st.comp.face = 1; st.comp.tx = st.comp.x; st.arrive = null;
+    await talk('Pip', 'Grandma taught me how to be a scientist! Scientists do three things: guess, watch, and explain.');
+    st.sci = { on: true, near: 1, puddle: 0, puddleX: FX + 22, ice: false };
+    await talk('Pip', 'I made two snowballs. One is right next to the warm fire. The other one is out in the cold snow.');
+    const a1 = await ask('Pip', 'Guess! What will happen to the snowball next to the fire?', ['💧 It will melt', '⛄ It will stay the same', '📈 It will grow bigger'], undefined, true);
+    await talk(c.name, 'Let\'s watch closely!'); endTalk(); st.scene = true;
+    await anim(3200, k => { st.sci.near = 1 - k; st.sci.puddle = k * 3; });
+    chime([659, 523, 392], 'sine'); st.scene = false;
+    await talk('Pip', a1 === 0 ? 'You guessed right! The heat from the fire made the snowball melt into water.' : 'Surprise! The snowball melted into water. Scientists love surprises, because that\'s how we learn!');
+    await talk('Pip', 'Look at the other snowball, out in the cold snow. It didn\'t melt at all!');
+    await talk('Pip', 'Now let\'s scoop the water away from the fire, out into the cold, and wait until it\'s really late at night.');
+    const a2 = await ask('Pip', 'Guess! What will happen to the water out in the cold?', ['🧊 It will freeze into ice', '💧 It will stay water', '🔥 It will get hot'], undefined, true);
+    endTalk(); st.scene = true;
+    await anim(1800, k => { st.sci.puddleX = FX + 22 + k * 18; });
+    await wait(600); st.sci.ice = true; chime([1568, 1976, 2349], 'triangle');
+    V.sparkle(st, st.sci.puddleX, 124, ['#ffffff', '#cfe9ff'], 18); await wait(800); st.scene = false;
+    await talk('Pip', a2 === 0 ? 'You\'re right! When water gets very cold, it freezes into ice.' : 'Look! The water froze into ice! When water gets very cold, it freezes.');
+    await talk(c.name, 'So warm things make ice melt into water, and cold things make water freeze into ice. Melting and freezing!');
+    save.emo.push({ q: 'sci-melt', a: ['melt', 'same', 'grow'][a1], ok: a1 === 0, d: today() }, { q: 'sci-freeze', a: ['freeze', 'water', 'hot'][a2], ok: a2 === 0, d: today() });
+    save.ch2.sci = true; persist();
+    endTalk();
+    if (!save.badges.includes('scientist')) await award('scientist');
+    if (!save.quests.includes('ice')) {
+      save.quests.push('ice'); persist();
+      await showCard('🧪', 'Try it for real!', 'With a grown-up, put one ice cube on a plate in a sunny spot, and one in the shade. Guess which will melt first, then check every few minutes!', 'We\'ll try it!');
+    }
+    if (!save.ch2.pages.fire) {
+      await talk('Pip', 'Hey! The melting snow uncovered something. It\'s a frozen page from Grandma\'s storybook!');
+      endTalk(); await runPage('fire');
+    }
+    st.sci = null;
+  }
+
+  // ---------- The owlets' nest: counting owlets ----------
+  async function runNest() {
+    const c = compInfo();
+    await talk(OWLET_NAMES[1], 'Hoo hoo! Grandma says we have to count everyone before bedtime, but we keep getting muddled!');
+    const a = await ask(OWLET_NAMES[1], 'Can you help us count?', ['Yes!', 'Later']); endTalk();
+    if (a !== 0) return;
+    await runStory('nest', 2);
+    await talk(OWLET_NAMES[0], 'Thank you! You\'re so good at counting!');
+    if (!save.ch2.pages.nest) { await talk(OWLET_NAMES[2], 'Oh! And look what blew into our nest. Is this Grandma\'s?'); endTalk(); await runPage('nest'); }
+    else endTalk();
+  }
+
+  // ---------- Story time ----------
+  async function storyPage(page) {
+    const r = await ask(GRAN, '"' + page.text + '"', ['🎤 I\'ll read it!', '🦉 You read it'], 'Will you read this page to the owlets?');
+    if (r === 1) await talk(GRAN, '"' + page.text + '"', page.text);
+    else { chime([784, 988]); await talk(GRAN, 'Beautiful reading!'); }
+  }
+  async function runBedtime() {
+    const c = compInfo(), P = id => PAGES.find(p => p.id === id);
+    st.storytime = true; st.owletsSleepy = false;
+    await talk(GRAN, 'Gather round, owlets! It\'s story time. Tonight\'s story is called: Little Fox Can\'t Sleep.');
+    await talk(GRAN, 'Once upon a time, Little Fox could not get to sleep.');
+    await storyPage(P('nest'));
+    await talk(GRAN, 'He tossed and he turned. So he hopped out of bed to look for his best friend, Pig.');
+    await talk(GRAN, 'He looked down by the sea.');
+    await storyPage(P('fire'));
+    await talk(GRAN, '"Have you seen Pig?" asked Fox. The dog shook his head. Then Fox heard a giggle coming from the kitchen...');
+    await storyPage(P('school'));
+    await talk(GRAN, 'There was Pig, all snuggled up in a big warm cup. "This is the cosiest bed in the whole world," said Pig.');
+    st.owletsSleepy = true;
+    await talk(GRAN, 'So Fox curled up next to Pig. And at last, Little Fox fell fast asleep. The end.');
+    await talk(OWLET_NAMES[1], 'Yawn... that was the best story ever...');
+    st.storytime = false; st.owletsSleepy = false;
+    save.ch2.story = true; persist();
+    await talk(GRAN, 'Thank you for saving my storybook. You are a true Story Keeper!');
+    endTalk();
+    await award('story');
+    await talk(GRAN, 'You know, little one, I can see how much ' + c.name + ' loves you.');
+    await talk(GRAN, 'Long ago, companions who were brave and kind could grow into a brand new form, with brand new powers.');
+    await talk(GRAN, 'The secret is hidden deep inside the Crystal Caves. When the time is right, the caves will open...');
+    await talk(c.name, 'A new form? With new powers? I can\'t wait!');
+    endTalk(); showGuide();
+  }
+
+  // ---------- Owl Village places ----------
+  Object.assign(SCRIPTS, {
+    async down() {
+      const a = await ask('Pip', 'Shall we go back down the snowy stairs to Starlight Village?', ['Yes', 'Not yet']); endTalk();
+      if (a === 0) await travel('village');
+    },
+    async house() { await SCRIPTS.grandma(); },
+    async grandma() {
+      const c = compInfo(), c2 = save.ch2; st.comp.face = 1;
+      if (!c2.met) {
+        await talk(GRAN, 'Pip? PIP! Oh, my little Pip! You\'re home!');
+        await talk('Pip', 'Grandma! I got lost in the blizzard. But my new friends found me, and they brought me all the way home!');
+        let f = await ask(c.name, 'How do you think Grandma Hoot felt while Pip was lost?', ['😟 Worried', '😄 Happy', '😴 Sleepy'], undefined, true);
+        logEmo('grandma-lost', ['worried', 'happy', 'sleepy'][f], f === 0);
+        await talk(c.name, f === 0 ? 'Yes. When someone we love is lost, we feel worried.' : 'Hmm. If someone you loved was lost, would you feel happy? I think Grandma felt worried.');
+        f = await ask(c.name, 'And how does she feel now that Pip is home?', ['😊 Happy', '😠 Cross', '😢 Sad'], undefined, true);
+        logEmo('grandma-home', ['happy', 'cross', 'sad'][f], f === 0);
+        await talk(c.name, f === 0 ? 'Yes! So, so happy.' : 'Look at her face. She\'s smiling! I think she feels happy.');
+        await talk(c.name, 'When a big worry goes away, we get a special happy feeling. It\'s called feeling relieved!');
+        await talk(GRAN, 'Thank you for bringing Pip home safely. You have been so brave, and so kind.');
+        await talk(GRAN, 'Please take this. It\'s the Snowflake Badge, for the hero who opened the Frost Gate!');
+        endTalk();
+        await award('snowflake');
+        await talk(GRAN, 'But oh dear. The blizzard caused another problem.');
+        await talk(GRAN, 'Every night, I read the owlets a bedtime story from my magic storybook. But the wind blew three pages away, and they froze solid!');
+        await talk(GRAN, 'A frozen page only melts when somebody reads its words out loud.');
+        await talk(GRAN, 'One page blew into the owlets\' nest. One landed by the campfire. And one flew all the way to Owl School!');
+        await talk(GRAN, 'If you find all three and read them, we can have story time together!');
+        c2.met = true; persist();
+        await talk(c.name, 'We\'ll find them, Grandma Hoot! Look, I can see the frozen pages sparkling!');
+        endTalk(); showGuide(); return;
+      }
+      const n = PAGES.filter(p => c2.pages[p.id]).length;
+      if (n < 3) { const next = PAGES.find(p => !c2.pages[p.id]); await talk(GRAN, 'You\'ve found ' + n + ' of my 3 pages. Is that one sparkling over at ' + PAGE_PLACE[next.id][0] + '?'); endTalk(); showGuide(); return; }
+      if (!c2.story) { const a = await ask(GRAN, 'You found all of my pages! Shall we have story time?', ['Yes!', 'Later']); endTalk(); if (a === 0) await runBedtime(); return; }
+      const a = await ask(GRAN, 'Hello again, Story Keeper! Would you like to read the story with the owlets again?', ['Yes!', 'Not now']); endTalk();
+      if (a === 0) await runBedtime();
+    },
+    async fire() {
+      const c = compInfo();
+      if (!save.ch2.met) { await talk(c.name, 'A cosy campfire! Let\'s say hello to Pip\'s grandma first.'); endTalk(); showGuide(); return; }
+      if (!save.ch2.sci || !save.ch2.pages.fire) { await runScience(); return; }
+      const a = await ask('Pip', 'Do you want to do the snowball experiment again?', ['Yes!', 'Not now']); endTalk();
+      if (a === 0) await runScience();
+    },
+    async nest() {
+      const c = compInfo();
+      if (!save.ch2.met) { await talk(c.name, 'Look at all the baby owls! Let\'s say hello to Pip\'s grandma first.'); endTalk(); showGuide(); return; }
+      await runNest();
+    },
+    async school() {
+      const c = compInfo();
+      if (!save.ch2.met) { await talk(c.name, 'Owl School! Let\'s say hello to Pip\'s grandma first.'); endTalk(); showGuide(); return; }
+      if (save.ch2.pages.school) { const a = await ask(OWLET_NAMES[0], 'Teacher! Will you teach us more tricky words?', ['Yes!', 'Not now']); endTalk(); if (a !== 0) return; }
+      await runSchool();
+    },
+    async caves() {
+      const c = compInfo();
+      await talk(c.name, 'The Crystal Caves! Ooh, it\'s all sparkly. But a thick wall of ice is blocking the way.');
+      await talk('Pip', save.ch2.story ? 'Grandma says the caves will open when the time is right. I think it\'s going to be very soon!' : 'Grandma knows all about the caves. Maybe we can ask her once we\'ve helped her?');
+      endTalk();
+    },
+  });
+
+  // ---------- Progress view ----------
+  function progressCh2(addGroup, map) {
+    const seenT = TRICKY_ORDER.filter(w => save.ch2.tricky[w]);
+    if (seenT.length) addGroup('Tricky words', seenT.map(w => ['t:' + w, w]));
+    const seenP = PAGES.filter(p => save.skills['p:' + p.id]);
+    if (seenP.length) addGroup('Story pages (sentences)', seenP.map(p => ['p:' + p.id, p.text]));
+    const b = document.createElement('p'); b.textContent = 'Badges: ' + (save.badges.length ? save.badges.map(id => BADGES.find(x => x.id === id).name).join(', ') : 'none yet') + '.';
+    map.appendChild(b);
+  }
+  if (location.hash === '#debug') window.__ch2 = { runPage, runSchool, runScience, runBedtime, travel };
+
 
   if (location.hash === '#debug') window.__st = st;
   drawHud();
