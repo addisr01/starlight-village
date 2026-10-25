@@ -60,7 +60,7 @@ body.spelling .talk { display: none; }
 .tenframe .cell { aspect-ratio: 1; border-radius: 8px; background: #2a2058; border: 2px solid #3b2e6e; }
 .tenframe .cell.on { background: radial-gradient(circle, #fff7c4 0 18%, #ffe27a 30%, rgba(255, 226, 122, 0.25) 60%, #2a2058 72%); border-color: #ffe27a; animation: flick 1.6s ease-in-out infinite; }
 @keyframes flick { 50% { filter: brightness(1.2); } }
-.nums { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; }
+.nums { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 640px; }
 .spell button.num { font-size: clamp(1.6rem, 6vw, 2.2rem); min-width: 58px; min-height: 58px; font-weight: 600; background: #fff7e8; color: #2a1d4a; border: 4px solid #2b1d45; box-shadow: 0 4px 0 #2b1d45; }
 .spell button.num.nope { opacity: 0.4; }
 .loose { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 560px; }
@@ -84,6 +84,7 @@ body.spelling .talk { display: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { padding: 3px 9px; border-radius: 999px; font-size: 0.95rem; border: 2px solid var(--edge); color: var(--soft); }
 .chip.learning { border-color: #e0a33a; color: var(--ink); background: rgba(224, 163, 58, 0.18); }
+.chip.secure { border-color: #6fcf97; color: var(--ink); background: rgba(111, 207, 151, 0.12); }
 .chip.mastered { border-color: #2f9e6e; color: var(--ink); background: rgba(47, 158, 110, 0.22); }
 .mapkey { font-size: 0.85rem; }
 .other { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
@@ -149,6 +150,11 @@ body.spelling .talk { display: none; }
 .medal .micon { font-size: 2.2rem; width: 58px; height: 58px; display: grid; place-items: center; border-radius: 50%; background: #2a2058; color: #b7a8e2; }
 .medal.got .micon { background: radial-gradient(circle, #fff3c4, #ffd66e 60%, #e0a33a); }
 .medal small { font-size: 0.85rem; line-height: 1.3; }
+.eqn { margin: 0; font: 700 clamp(2.6rem, 11vw, 4.4rem)/1.1 "Andika", system-ui, sans-serif; color: #fff7e8; letter-spacing: 0.02em; }
+.eqn[hidden] { display: none; }
+.eqn .blank { display: inline-block; min-width: 1.2em; text-align: center; border: 4px dashed #ffe27a; border-radius: 12px; color: #ffe27a; padding: 0 6px; margin: 0 4px; }
+.eqn .blank.filled { border-style: solid; background: #ffe27a; color: #10233a; }
+.tenframe[hidden] { display: none; }
 .grownup span { color: var(--soft); font-size: 1rem; }
 .grownup button { font-size: 1.05rem !important; min-height: 48px !important; }
 .tile:focus-visible, .spell button:focus-visible, .slot:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -223,6 +229,7 @@ body.spelling .talk { display: none; }
   </section>
   <section class="spell bonds" id="bonds" hidden aria-live="polite">
     <p class="spell-msg" id="bondMsg"></p>
+    <p class="eqn" id="eqn" hidden></p>
     <div class="tenframe" id="tenframe" role="img"></div>
     <div class="nums" id="nums"></div>
     <div class="loose" id="loose" hidden></div>
@@ -248,6 +255,9 @@ body.spelling .talk { display: none; }
     <p>After this long, her companion gets sleepy and says goodnight (only between activities).</p>
     <div class="row seg" id="sessionBtns" style="margin-top:0"></div>
     <div class="row" style="margin-top:8px"><button type="button" id="sleepNow">Say goodnight now</button></div>
+    <h3>Listening</h3>
+    <p>If the microphone keeps missing words she reads correctly, turn listening off. She'll pick pictures or build words instead, and a correct first pick counts towards mastery.</p>
+    <div class="row seg" id="listenBtns" style="margin-top:0"></div>
     <h3>Letter sounds</h3>
     <p>Record the pure sound, like "sss" or "mmm", not "suh". Each recording takes about 1.5 seconds and replaces the device voice for that sound. Recordings stay on this device.</p>
     <div id="recorder"></div>
@@ -762,11 +772,13 @@ body.spelling .talk { display: none; }
         blitAt(buf, spr, p.x - cam - 16 + shake, (p.follow ? FEET : 118) - 30 + hop);
         return;
       }
-      const c = CREATURES[s.comp.i], blink = ((t + 20) % 170) < 6, faceLeft = s.comp.face < 0;
-      const spr = s.comp.evo ? (faceLeft ? (blink ? s.comp.evo.shutF : s.comp.evo.openF) : (blink ? s.comp.evo.shut : s.comp.evo.open)) : faceLeft ? (blink ? c.shutF : c.openF) : (blink ? c.shut : c.open);
+      const c = CREATURES[s.comp.i], blink = ((t + 20) % 170) < 6, faceLeft = s.comp.face < 0, evo = s.comp.evo, base = evo || c;
+      let spr = faceLeft ? (blink ? base.shutF : base.openF) : (blink ? base.shut : base.open);
+      if (s.comp.sil) spr = faceLeft ? base.silF : base.sil;
       const bob = s.comp.walking ? -Math.round(Math.abs(Math.sin(t / 3.2)) * 3) : Math.round((Math.sin(t / 18) + 1) / 2);
-      blitAt(buf, spr, s.comp.x - cam - 24, FEET - 46 + bob);
-      const ph = t % 90; if (ph < 18) { const fx = faceLeft ? 47 - c.fx : c.fx, x = Math.round(s.comp.x - cam - 24 + fx), y = FEET - 46 + bob + c.fy, r = ph < 9 ? 1 : 2, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
+      const ox = s.comp.x - cam - spr.w / 2, oy = FEET - spr.h + 2 + bob + (s.comp.lift || 0);
+      blitAt(buf, spr, ox, oy);
+      const ph = t % 90; if (ph < 18 && !s.comp.sil) { const fx = faceLeft ? spr.w - 1 - base.fx : base.fx, x = Math.round(ox + fx), y = Math.round(oy + base.fy), r = ph < 9 ? 1 : 2, col = ph % 6 < 3 ? '#ffffff' : c.spark; put(x, y - r - 1, col); put(x, y + r + 1, col); put(x - r - 1, y, col); put(x + r + 1, y, col); }
     });
   }
   const BUBBLE = ['XXXXXXX', 'X.....X', 'X.X.X.X', 'X.....X', 'XXXXXXX', '..XX...', '.X.....'];
@@ -825,6 +837,121 @@ body.spelling .talk { display: none; }
 
   const api = { Surf, sky, OUT_COL: OUT, pipOwl, PIP, drawSky, drawLayer, drawActors, drawOverlay, drawBubble, blitAt, putter, TREE_LANTERNS, dith, WW, FEET, SPOT_X, FOG_STOPS, hotspots, MIN_X, maxX, renderVillage, sparkle };
   if (typeof module !== 'undefined') module.exports = api; else root.VILLAGE = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+// Evolved companions: bigger, stronger, and with wings. Depends on engine.js (PX).
+(function (root) {
+  'use strict';
+  const PX = root.PX || require('./engine.js');
+  const { Sprite, CREATURES, pack } = PX;
+  const E = '#2a1a4a';
+
+  function feather(s, bx, by, tx, ty, w, col) {
+    const dx = tx - bx, dy = ty - by, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    const mx = bx + dx * 0.55, my = by + dy * 0.55;
+    s.poly([[bx + nx * w * 0.5, by + ny * w * 0.5], [mx + nx * w * 0.62, my + ny * w * 0.62], [tx, ty], [mx - nx * w * 0.62, my - ny * w * 0.62], [bx - nx * w * 0.5, by - ny * w * 0.5]], col);
+  }
+  // A wing on one side: dir = -1 (left) or 1 (right). Three layers: long back feathers, middle, and soft tips near the shoulder.
+  // Raised wings behind the shoulders. Each feather gets a dark edge first so the feathers read separately.
+  function wing(s, dir, c1, c2, c3, sparkle) {
+    const bx = 32 + dir * 8, by = 36, EDGE = PX.mix(c1, '#2a1a4a', 0.45);
+    const tip = (deg, len) => [bx + dir * Math.cos(deg * Math.PI / 180) * len, by - Math.sin(deg * Math.PI / 180) * len];
+    const layer = (list, w, col) => { s.begin(); list.forEach(([d, l]) => { const [tx, ty] = tip(d, l); feather(s, bx, by, tx, ty, w + 2, EDGE); feather(s, bx, by, tx, ty, w, col); }); };
+    layer([[82, 30], [64, 34], [46, 34], [28, 30]], 9.5, c1);
+    layer([[72, 24], [54, 26], [36, 24]], 8.5, c2);
+    layer([[62, 15], [40, 15]], 8, c3);
+    if (sparkle) { s.begin({ shade: false }); [[60, 27], [44, 25], [76, 20]].forEach(([d, l]) => { const [x, y] = tip(d, l); s.px(x, y, sparkle); }); }
+  }
+
+  function faceAt(s, ox, oy, o) {
+    s.begin({ shade: false });
+    const ex1 = 19.5 + ox, ex2 = 29.5 + ox, ey = 22.5 + oy;
+    if (o.blink) { for (let x = 17; x <= 21; x++) s.px(x + ox, 23 + oy, E); for (let x = 27; x <= 31; x++) s.px(x + ox, 23 + oy, E); s.px(17 + ox, 22 + oy, E); s.px(31 + ox, 22 + oy, E); }
+    else {
+      s.ellipse(ex1, ey, 2.6, 3.4, E); s.ellipse(ex2, ey, 2.6, 3.4, E);
+      const iris = o.iris; s.px(19 + ox, 24 + oy, iris); s.px(20 + ox, 24 + oy, iris); s.px(29 + ox, 24 + oy, iris); s.px(30 + ox, 24 + oy, iris);
+      s.px(18 + ox, 21 + oy, '#ffffff'); s.px(18 + ox, 22 + oy, '#ffffff'); s.px(28 + ox, 21 + oy, '#ffffff'); s.px(28 + ox, 22 + oy, '#ffffff'); s.px(20 + ox, 23 + oy, '#ffffff'); s.px(30 + ox, 23 + oy, '#ffffff');
+      // a confident brow: older, braver
+      [[16, 19], [17, 18], [18, 18], [19, 18]].forEach(([x, y]) => s.px(x + ox, y + oy, E)); [[33, 19], [32, 18], [31, 18], [30, 18]].forEach(([x, y]) => s.px(x + ox, y + oy, E));
+      if (o.lashes) { s.px(16 + ox, 20 + oy, E); s.px(33 + ox, 20 + oy, E); }
+    }
+    s.px(14 + ox, 26 + oy, o.blush || '#f49ac6'); s.px(15 + ox, 26 + oy, o.blush || '#f49ac6'); s.px(34 + ox, 26 + oy, o.blush || '#f49ac6'); s.px(35 + ox, 26 + oy, o.blush || '#f49ac6');
+    if (!o.noNose) s.px(24 + ox, 26 + oy, o.nose || '#e57aa8');
+    [[22, 27], [23, 28], [24, 28], [25, 28], [26, 27]].forEach(([x, y]) => s.px(x + ox, y + oy, E));
+  }
+
+  // Shared grown-up cat body (64 x 64). k = palette + extras.
+  function grownCat(k, blink) {
+    const s = new Sprite(64, 64), B = k.body, L = k.light;
+    wing(s, -1, k.w1, k.w2, k.w3, k.spark); wing(s, 1, k.w1, k.w2, k.w3, k.spark);
+    k.tail(s);
+    s.begin(); s.ellipse(22, 51, 7, 8, B); s.ellipse(42, 51, 7, 8, B);
+    s.begin(); s.ellipse(32, 44, 11.5, 12.5, B);
+    s.begin(); s.rect(25, 46, 6, 14, B); s.rect(33, 46, 6, 14, B);
+    s.begin(); s.ellipse(28, 60, 4, 2.4, k.paw || B); s.ellipse(36, 60, 4, 2.4, k.paw || B);
+    s.begin({ shade: false }); for (let y = 50; y < 60; y++) s.px(31.5, y, PX.mix(B, '#2a1a4a', 0.28));
+    s.begin({ shade: false }); s.poly([[26, 33], [38, 33], [37, 44], [34, 41], [32, 46], [30, 41], [27, 44]], L);
+    if (k.chest) k.chest(s);
+    s.begin(); s.poly([[21, 18], [22, 1], [31, 11]], k.ear || B); s.poly([[33, 11], [42, 1], [43, 18]], k.ear || B);
+    s.begin({ shade: false }); s.poly([[23.5, 14], [23.8, 5], [28.5, 11]], k.inner); s.poly([[35.5, 11], [40.2, 5], [40.5, 14]], k.inner);
+    if (k.behindHead) k.behindHead(s);
+    s.begin({ cast: true }); s.ellipse(32, 22, 12.5, 10.5, B); s.poly([[20, 21], [16, 27], [22, 27]], B); s.poly([[44, 21], [48, 27], [42, 27]], B);
+    s.begin({ shade: false }); s.ellipse(32, 27.5, 4.6, 2.6, L);
+    if (k.head) k.head(s);
+    faceAt(s, 8, 0, { blink, iris: k.iris, lashes: k.lashes, noNose: k.noNose });
+    if (k.front) k.front(s);
+    return s.finish();
+  }
+
+  const KINDS = {
+    frostwhisk: {
+      name: 'Frostwing', fx: 32, fy: 13,
+      body: '#86c3f2', light: '#eaf7ff', inner: '#c6e6ff', iris: '#4fb0ff', w1: '#5fa7e0', w2: '#a9d4ff', w3: '#ffffff', spark: '#ffffff',
+      tail(s) { s.begin(); [[44, 56, 4], [49, 52, 4.2], [53, 46, 4.2], [55, 40, 4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, '#86c3f2')); s.begin(); s.poly([[52, 36], [55, 26], [58, 36]], '#dff4ff'); s.poly([[55, 37], [61, 30], [59, 39]], '#ffffff'); s.poly([[51, 38], [48, 30], [54, 37]], '#ffffff'); },
+      chest(s) { s.begin({ shade: false }); [[27, 33], [30.5, 34], [34, 33]].forEach(([x, y], k) => s.poly([[x, y], [x + 1.5, y + 3.5], [x + 3, y]], k === 1 ? '#ffffff' : '#dff4ff')); },
+      head(s) {
+        s.begin({ shade: false }); const W = '#ffffff', cx = 32, cy = 13;
+        for (let d = -3; d <= 3; d++) { s.px(cx + d, cy, W); s.px(cx, cy + d, W); } [[-2, -2], [2, 2], [-2, 2], [2, -2]].forEach(([x, y]) => s.px(cx + x, cy + y, W)); s.px(cx, cy, '#c6e6ff');
+        s.px(23, 4, W); s.px(41, 4, W); s.px(22, 3, W); s.px(42, 3, W);
+      },
+    },
+    lumikit: {
+      name: 'Starwing', fx: 59, fy: 21,
+      body: '#a07ee0', light: '#e2d4fb', inner: '#f4a6d0', iris: '#8f7dff', w1: '#7b5cff', w2: '#c3a8ff', w3: '#ffd1ef', spark: '#ffe27a',
+      tail(s) { s.begin(); [[43, 57, 3.6], [46, 55.5, 3.5], [49, 53, 3.4], [51.5, 50, 3.3], [53.5, 46.5, 3.2], [55, 43, 3.1], [56.3, 39.5, 3], [57.3, 36, 2.9], [58, 32.5, 2.8], [58.6, 29, 2.7]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, '#a07ee0')); s.begin({ shade: false }); s.star(59, 24, 6, 2.6, '#ffe27a'); s.px(59, 24, '#fffbe6'); s.px(58, 23, '#fffbe6'); },
+      chest(s) { s.begin({ shade: false }); s.star(32, 38, 2.6, 1.1, '#ffe27a'); },
+      head(s) { s.begin({ shade: false }); s.star(32, 13, 4.6, 2, '#ffe27a'); s.px(32, 13, '#fffbe6'); s.px(31, 12, '#fffbe6'); },
+    },
+    moonfoal: {
+      name: 'Moonwing', fx: 32, fy: 0, lashes: true, noNose: true,
+      body: '#f5eeff', light: '#ffffff', inner: '#f4a6d0', iris: '#b08cff', w1: '#d6c6f5', w2: '#f5eeff', w3: '#ffffff', spark: '#c49cf0', paw: '#8a6fb8', ear: '#f5eeff',
+      tail(s) { s.begin(); [[44, 56, 4.4], [49, 51, 4.4], [52, 45, 4.2], [53, 39, 4]].forEach(([x, y, r]) => s.ellipse(x, y, r, r, '#c49cf0')); s.begin({ shade: false }); [[52, 39], [51, 45], [48, 51], [44, 56]].forEach(([x, y]) => s.px(x, y, '#f4a6d0')); },
+      chest(s) { s.begin({ shade: false }); for (let y = 35; y <= 41; y++) for (let x = 28; x <= 36; x++) { const a = Math.hypot(x + 0.5 - 32, y + 0.5 - 38), b = Math.hypot(x + 0.5 - 33.6, y + 0.5 - 36.8); if (a < 3.4 && b > 2.8) s.px(x, y, '#ffd36a'); } },
+      behindHead(s) { s.begin(); s.ellipse(19, 16, 5, 6, '#c49cf0'); s.ellipse(17, 24, 4.6, 6, '#c49cf0'); s.ellipse(18, 32, 3.8, 4.6, '#c49cf0'); s.ellipse(45, 16, 4, 5, '#c49cf0'); s.begin({ shade: false }); s.px(18, 14, '#f4a6d0'); s.px(16, 24, '#f4a6d0'); s.px(17, 32, '#f4a6d0'); },
+      head(s) {
+        s.begin(); s.ellipse(25, 12.5, 7, 3.6, '#c49cf0'); s.ellipse(38, 12, 4.4, 3, '#c49cf0');
+        s.begin({ shade: false }); s.px(23, 11, '#f4a6d0'); s.px(24, 11, '#f4a6d0'); s.px(25, 12, '#f4a6d0'); s.px(39, 11, '#f4a6d0');
+        s.begin(); s.poly([[28.5, 12.5], [32, -0.5], [35.5, 12.5]], '#ffd36a');
+        s.begin({ shade: false }); [[29, 10], [30, 10], [31, 8], [30, 7], [31, 7], [32, 5], [31, 4], [32, 3]].forEach(([x, y]) => s.px(x, y, '#e0a33a'));
+      },
+      front(s) { s.begin({ shade: false }); s.px(30, 26, '#c783a8'); s.px(34, 26, '#c783a8'); },
+    },
+  };
+
+  function flip(sp) { const out = new Array(sp.w * sp.h); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) out[y * sp.w + x] = sp.data[y * sp.w + (sp.w - 1 - x)]; return { w: sp.w, h: sp.h, data: out }; }
+  const WHITE = pack('#ffffff');
+  function sil(sp) { return { w: sp.w, h: sp.h, data: sp.data.map(v => v ? WHITE : 0) }; }
+
+  const EVO = {};
+  Object.keys(KINDS).forEach(id => {
+    const k = KINDS[id], open = grownCat(k, false), shut = grownCat(k, true);
+    EVO[id] = { id, name: k.name, fx: k.fx, fy: k.fy, open, shut, openF: flip(open), shutF: flip(shut), sil: sil(open), silF: sil(flip(open)) };
+  });
+  CREATURES.forEach(c => { c.sil = sil(c.open); c.silF = sil(c.openF || c.open); });
+
+  const api = { EVO };
+  if (typeof module !== 'undefined') module.exports = api; else root.EVOLVE = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -971,6 +1098,9 @@ body.spelling .talk { display: none; }
       if (sci.puddle) { const pw = 6 + sci.puddle * 2; for (let x = -pw; x <= pw; x++) { put(sci.puddleX - cam + x, 126, sci.ice ? '#ffffff' : '#86c3f2'); put(sci.puddleX - cam + x, 127, sci.ice ? '#cfe9ff' : '#5fa7e0'); } if (sci.ice) { put(sci.puddleX - cam - 2, 125, '#ffffff'); put(sci.puddleX - cam + 3, 125, '#ffffff'); } }
       const fx2 = FX + 50 - cam; for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) { const d = Math.hypot(x, y * 1.05); if (d <= 5) put(fx2 + x, 119 + y, d > 4 ? OUT : (x < 0 && y < 0 ? '#ffffff' : '#e6eeff')); }
     }
+    // ice wall sealing the Crystal Caves
+    if (!s.caveOpen) for (let y = 76; y < 118; y++) for (let x = 596; x < OW; x++) { const d = Math.hypot((x - CX) / 22, (y - 118) / 44); if (d < 1) { const X = x - cam; if (X >= 0 && X < W) buf[y * W + X] = pack(d > 0.9 ? OUT : (x * 2 + y + (t >> 2)) % 23 === 0 ? '#ffffff' : dith(x, y) < 0.45 ? '#cfe9ff' : '#a9d4ff'); } }
+    if (!s.caveOpen && s.caveRunes) [[606, 96], [616, 90], [626, 96]].forEach(([rx, ry], i) => { if (i < s.caveRunes) for (let k = -2; k <= 2; k++) { put(rx - cam + k, ry, '#ffe27a'); put(rx - cam, ry + k, '#ffe27a'); } });
     // floating frozen pages still to find
     const pages = s.pagesLeft || [];
     pages.forEach((id, k) => {
@@ -994,6 +1124,119 @@ body.spelling .talk { display: none; }
 
   const api = { OW, WW: OW, FEET, MIN_X, maxX, hotspots, render, GRAN_X, FIRE_X, NEST_X, SCHOOL_X, CAVE_X, PAGE_POS, OWLETS };
   if (typeof module !== 'undefined') module.exports = api; else root.OWLV = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+// The Crystal Caves: the third map, through the ice wall in Owl Village. Depends on engine.js (PX) and world.js (VILLAGE).
+(function (root) {
+  'use strict';
+  const PX = root.PX || require('./engine.js');
+  const V = root.VILLAGE || require('./world.js');
+  const { W, H, Sprite, pack, mix, hash } = PX;
+  const { Surf, dith, FEET } = V, OUT = V.OUT_COL;
+  const CW = 640;
+  const WORDS_X = 150, CHASM0 = 282, CHASM1 = 352, STONES = [291, 304, 317, 330, 343], GLIM_X = 470, HEART_X = 592;
+
+  const g = new Surf(CW, H);
+  // rock walls with a soft glow from below
+  for (let y = 0; y < H; y++) for (let x = 0; x < CW; x++) {
+    const t = y / H, d = dith(x, y), n = hash(x >> 1, y >> 1) * 0.6 + hash(x >> 3, y >> 3) * 0.4;
+    const base = t < 0.25 ? '#120c2a' : t < 0.5 ? '#1a1240' : t < 0.75 ? '#221852' : '#2a1f5a';
+    g.set(x, y, n > 0.9 ? mix(base, '#3b2e6e', 0.35) : n < 0.08 ? mix(base, '#000000', 0.2) : base);
+  }
+  // stalactites
+  for (let k = 0; k < 46; k++) { const x = Math.floor(hash(k, 71) * CW), L = 6 + Math.floor(hash(k, 72) * 18), w = 3 + Math.floor(hash(k, 73) * 4); g.poly([[x - w, 0], [x, L], [x + w, 0]], OUT); g.poly([[x - w + 1, 0], [x, L - 2], [x + w - 1, 0]], '#2f2566'); if (k % 3 === 0) g.set(x, L - 3, '#8f80d8'); }
+  // floor
+  for (let y = 112; y < H; y++) for (let x = 0; x < CW; x++) { const d = dith(x, y); g.set(x, y, ['#3b2e6e', '#33285f', '#2b2152', '#241b46'][Math.min(3, Math.floor((y - 112) / 32 * 3 + d))]); }
+  for (let y = 117; y < 136; y++) for (let x = 0; x < CW; x++) { const edge = y === 117 || y === 135; if (edge && dith(x, y) > 0.5) continue; g.set(x, y, hash(x, y) > 0.93 ? '#5d4da8' : '#4a3c8e'); }
+  // the chasm
+  for (let y = 112; y < H; y++) for (let x = CHASM0; x < CHASM1; x++) { const edge = Math.min(x - CHASM0, CHASM1 - x); if (edge < 2) g.set(x, y, OUT); else g.set(x, y, dith(x, y) < (y - 112) / 40 ? '#05030c' : '#0d0820'); }
+  // cave mouth (back to Owl Village), left edge
+  for (let y = 60; y < 136; y++) for (let x = 0; x < 34; x++) { const d = Math.hypot((x - 4) / 28, (y - 136) / 76); if (d < 1) g.set(x, y, d > 0.9 ? OUT : dith(x, y) < 0.5 ? '#cfe9ff' : '#eaf6ff'); }
+  // background crystal clusters (always dim)
+  function crystal(cx, base, h, w, col, dark) { g.poly([[cx - w, base], [cx - w + 1, base - h * 0.7], [cx, base - h], [cx + w - 1, base - h * 0.7], [cx + w, base]], OUT); g.poly([[cx - w + 1, base], [cx - w + 2, base - h * 0.7 + 1], [cx, base - h + 2], [cx + w - 2, base - h * 0.7 + 1], [cx + w - 1, base]], col); for (let y = base - h + 4; y < base - 2; y++) g.set(cx - 1, y, dark || mix(col, '#ffffff', 0.4)); }
+  [[60, 114, 18, 4, '#5a4aa8'], [70, 114, 12, 3, '#6a5ab8'], [236, 114, 16, 4, '#4a6aa8'], [250, 114, 10, 3, '#5a7ab8'], [400, 114, 20, 5, '#5a4aa8'], [412, 114, 12, 3, '#6a5ab8'], [520, 114, 14, 4, '#4a6aa8'], [530, 112, 9, 3, '#7a6ac8']].forEach(a => crystal(...a));
+  // Glimmer's nook: a cluster to hide behind
+  [[GLIM_X - 10, 116, 26, 6, '#6a5ab8'], [GLIM_X + 4, 116, 34, 7, '#7a6ac8'], [GLIM_X + 18, 116, 22, 5, '#5a4aa8']].forEach(a => crystal(...a));
+  // Heart Crystal pedestal
+  g.rect(HEART_X - 20, 108, 40, 10, OUT); g.rect(HEART_X - 19, 109, 38, 8, '#4a3c8e'); g.rect(HEART_X - 19, 109, 38, 2, '#6a5ab8');
+
+  // ---------- Glimmer, a shy little crystal bat ----------
+  function glimmer(blink) {
+    const s = new Sprite(30, 22), BODY = '#b7aedb', WG = '#bfe9ff', WG2 = '#86c3f2', Ey = '#2a1a4a';
+    s.begin(); s.poly([[13, 10], [2, 4], [4, 9], [1, 12], [6, 13], [4, 17], [12, 14]], WG2); s.poly([[17, 10], [28, 4], [26, 9], [29, 12], [24, 13], [26, 17], [18, 14]], WG2);
+    s.begin({ shade: false }); s.poly([[12, 10], [4, 6], [6, 10], [4, 12], [11, 13]], WG); s.poly([[18, 10], [26, 6], [24, 10], [26, 12], [19, 13]], WG);
+    s.begin(); s.poly([[10, 6], [11, 1], [13, 5]], BODY); s.poly([[20, 6], [19, 1], [17, 5]], BODY);
+    s.begin(); s.ellipse(15, 11, 6.5, 7, BODY);
+    s.begin({ shade: false });
+    if (blink) { [[11, 10], [12, 11], [13, 10], [17, 10], [18, 11], [19, 10]].forEach(([x, y]) => s.px(x, y, Ey)); }
+    else { s.ellipse(12.5, 10, 1.8, 2.2, Ey); s.ellipse(17.5, 10, 1.8, 2.2, Ey); s.px(12, 9, '#ffffff'); s.px(17, 9, '#ffffff'); }
+    s.px(10, 13, '#f49ac6'); s.px(20, 13, '#f49ac6'); s.px(14, 14, Ey); s.px(15, 15, Ey); s.px(16, 14, Ey);
+    s.px(15, 4, '#ffffff'); s.px(15, 5, WG);
+    return s.finish();
+  }
+  const GLIM = { open: glimmer(false), shut: glimmer(true) };
+
+  function hotspots(s) {
+    const list = [
+      { id: 'caveexit', x0: 0, x1: 36, y0: 60, y1: 144, stand: 40 },
+      { id: 'wordcrystals', x0: WORDS_X - 34, x1: WORDS_X + 34, y0: 40, y1: 124, stand: WORDS_X - 40 },
+    ];
+    if (!s.bridgeDone) list.push({ id: 'bridge', x0: CHASM0 - 16, x1: CHASM1 + 10, y0: 90, y1: 144, stand: CHASM0 - 14 });
+    list.push({ id: 'glimmer', x0: GLIM_X - 26, x1: GLIM_X + 30, y0: 70, y1: 124, stand: GLIM_X - 36 });
+    list.push({ id: 'heart', x0: HEART_X - 26, x1: HEART_X + 26, y0: 30, y1: 124, stand: HEART_X - 40 });
+    return list;
+  }
+  const MIN_X = 34, maxX = s => s.bridgeDone ? HEART_X - 40 : CHASM0 - 14;
+
+  const MOTES = Array.from({ length: 40 }, (_, k) => ({ x: hash(k, 81) * CW, y: 20 + hash(k, 82) * 100, p: hash(k, 83) * 99, c: ['#bfe9ff', '#c9bcff', '#ffd1ef'][k % 3] }));
+  function glowAt(buf, cam, cx, cy, r, col, k, t) {
+    for (let y = Math.floor(cy - r); y < cy + r; y++) for (let x = Math.floor(cx - r); x < cx + r; x++) {
+      const d = Math.hypot(x - cx, y - cy) / r; if (d >= 1) continue; const X = x - cam; if (X < 0 || X >= W || y < 0 || y >= H) continue;
+      if (dith(x + (t >> 3), y) < (1 - d) * k) { const v = buf[y * W + X]; buf[y * W + X] = pack(mix(PX.toHex([v & 255, (v >> 8) & 255, (v >> 16) & 255]), col, 0.5)); }
+    }
+  }
+  function drawCrystal(put, cam, cx, base, h, w, col, lit, t) {
+    const pulse = lit ? (Math.sin(t / 12) + 1) / 2 : 0, c = lit ? mix(col, '#ffffff', 0.25 + pulse * 0.25) : mix(col, '#1a1240', 0.55);
+    for (let y = 0; y < h; y++) { const yy = base - y, hw = y < h * 0.7 ? w : w * (1 - (y - h * 0.7) / (h * 0.3)); for (let x = -Math.round(hw); x <= Math.round(hw); x++) put(cx + x - cam, yy, Math.abs(x) >= Math.round(hw) ? OUT : x === -1 && lit ? '#ffffff' : c); }
+  }
+
+  function render(buf, t, s) {
+    V.drawLayer(buf, g, s.cam | 0);
+    const cam = s.cam | 0, put = V.putter(buf);
+    // daylight spilling in from the cave mouth
+    glowAt(buf, cam, 8, 110, 46, '#cfe9ff', 0.35, t);
+    // the three word crystals
+    [[WORDS_X - 20, 30, 6, '#5fe0e0'], [WORDS_X, 40, 7, '#86c3f2'], [WORDS_X + 20, 32, 6, '#b98cff']].forEach(([cx, h, w, col], i) => {
+      const lit = (s.wordLit || 0) > i; if (lit) glowAt(buf, cam, cx, 118 - h / 2, h * 0.9, col, 0.5, t);
+      drawCrystal(put, cam, cx, 118, h, w, col, lit, t + i * 9);
+    });
+    // stepping stones across the chasm
+    STONES.forEach((x, i) => {
+      const lit = (s.bridge || 0) > i, X = x - cam;
+      if (lit) { glowAt(buf, cam, x, 122, 9, '#bfe9ff', 0.5, t); for (let yy = 117; yy < 128; yy++) for (let xx = -5; xx <= 5; xx++) { const e = Math.abs(xx) === 5 || yy === 127; put(X + xx, yy, e ? OUT : yy < 119 ? '#ffffff' : (xx + yy) % 5 === 0 ? '#eaf6ff' : '#bfe9ff'); } }
+      else if ((t >> 4) % 2 || i === (s.bridge || 0)) for (let xx = -5; xx <= 5; xx++) { put(X + xx, 117, '#4a6aa8'); put(X + xx, 127, '#4a6aa8'); }
+    });
+    // the Heart Crystal
+    const hg = s.heartGlow || 0, flash = s.evoFlash || 0;
+    glowAt(buf, cam, HEART_X, 76, 34 + hg * 10, flash ? '#ffffff' : '#ffd1ef', 0.25 + hg * 0.45, t);
+    drawCrystal(put, cam, HEART_X, 108, 58, 13, flash && (t >> 2) % 2 ? '#ffffff' : '#ff9fd6', hg > 0.05, t);
+    drawCrystal(put, cam, HEART_X - 16, 108, 24, 5, '#c49cf0', hg > 0.05, t + 20); drawCrystal(put, cam, HEART_X + 16, 108, 28, 5, '#b98cff', hg > 0.05, t + 40);
+    // characters
+    const gs = s.glimmer || 'hide', gBlink = (t % 130) < 6, gSpr = gBlink ? GLIM.shut : GLIM.open;
+    // while she hides, Glimmer peeks out from behind the front crystals
+    if (gs === 'hide') {
+      if ((t % 200) < 70) V.blitAt(buf, gSpr, GLIM_X + 2 - cam - 15, 84 + Math.round(Math.sin(t / 6)));
+      [[GLIM_X - 10, 116, 26, 6, '#6a5ab8'], [GLIM_X + 4, 116, 34, 7, '#7a6ac8']].forEach(([cx, b2, h, w, col]) => drawCrystal(put, cam, cx, b2, h, w, col, false, t));
+    }
+    const npcs = gs === 'hide' ? [] : [{ x: GLIM_X, draw(b2) { const fy = 70 + Math.round(Math.sin(t / 9) * 4), fx = gs === 'follow' ? s.comp.x + 30 : GLIM_X - 6; V.blitAt(b2, gSpr, fx - cam - 15, fy); } }];
+    V.drawActors(buf, t, s, cam, npcs, true);
+    V.drawOverlay(buf, t, s, cam);
+    MOTES.forEach(m => { const x = m.x + Math.sin((t + m.p * 7) / 40) * 8 - cam, y = m.y + Math.sin((t + m.p * 5) / 30) * 5; if (Math.sin((t + m.p * 11) / 15) > 0.2) put(x, y, m.c); });
+  }
+
+  const api = { CW, WW: CW, FEET, MIN_X, maxX, hotspots, render, WORDS_X, STONES, CHASM0, CHASM1, GLIM_X, HEART_X };
+  if (typeof module !== 'undefined') module.exports = api; else root.CAVES = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -1062,7 +1305,9 @@ body.spelling .talk { display: none; }
 (function (root) {
   'use strict';
   const GAPS = [0, 1, 2, 4, 7, 14]; // days until next review, by level
-  const MASTER_DAYS = 2; // answered alone on this many separate days = mastered
+  const SECURE_DAYS = 3; // answered alone on this many separate days = secure
+  const MASTER_GAP = 21; // ...and correct again this many days after becoming secure, no misses since = mastered
+  const daysBetween = (a, b) => { const p = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((p(b) - p(a)) / 864e5); };
 
   function dayStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function addDays(s, n) { const [y, m, d] = s.split('-').map(Number); return dayStr(new Date(y, m - 1, d + n)); }
@@ -1075,9 +1320,14 @@ body.spelling .talk { display: none; }
         const s = get(id), t = today(); s.seen++;
         if (outcome === 'strong') { if (!s.days.includes(t)) s.days.push(t); if (s.days.length > 12) s.days.shift(); s.lvl = Math.min(5, s.lvl + 1); s.due = addDays(t, GAPS[s.lvl]); }
         else if (outcome === 'ok') { s.due = addDays(t, 1); }
-        else { s.lvl = 0; s.due = t; }
+        else { s.lvl = 0; s.due = t; s.days = []; }
       },
-      state(id) { const s = store[id]; if (!s || !s.seen) return 'new'; return s.days.length >= MASTER_DAYS ? 'mastered' : 'learning'; },
+      state(id) {
+        const s = store[id]; if (!s || !s.seen) return 'new';
+        if (s.days.length < SECURE_DAYS) return 'learning';
+        const secureOn = s.days[SECURE_DAYS - 1];
+        return daysBetween(secureOn, s.days[s.days.length - 1]) >= MASTER_GAP ? 'mastered' : 'secure';
+      },
       isDue(id) { const s = store[id]; return !!s && s.seen > 0 && s.due <= today(); },
       // due skills first (lowest level first), then least-known; ties shuffled
       pick(ids, n) {
@@ -1096,7 +1346,7 @@ body.spelling .talk { display: none; }
     });
     return store;
   }
-  const api = { create, fromLog, addDays, dayStr, GAPS, MASTER_DAYS };
+  const api = { create, fromLog, addDays, dayStr, GAPS, SECURE_DAYS, MASTER_GAP };
   if (typeof module !== 'undefined') module.exports = api; else root.SKILLS = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -1109,9 +1359,9 @@ body.spelling .talk { display: none; }
   // Personal details live here as settings, so the game can be set up for any child.
   const CONFIG = { petName: 'Spot', worldName: 'Starlight Village', powerSlots: 4 };
   const POWERS = {
-    lumikit: { kind: 'star', icon: '⭐', sniff: 'I can see so many stars from here!', names: ['Star Twinkle', 'Comet Dash', 'Starlight Glow', 'Shooting Star'], fx: ['fall', 'comet', 'ring', 'comets'], shape: 'star', cols: ['#ffe27a', '#fff3c4', '#b9a4ff', '#ffffff'] },
-    moonfoal: { kind: 'moon', icon: '🌙', sniff: 'The moon looks so close tonight!', names: ['Moon Glow', 'Rainbow Mane', 'Moonbeam', 'Starlit Gallop'], fx: ['ring', 'rainbow', 'moonbeam', 'gallop'], shape: 'star', cols: ['#fff2b0', '#f4a6d0', '#c49cf0', '#ffffff'] },
-    frostwhisk: { kind: 'snow', icon: '❄️', sniff: 'I can smell snow up there! I love snow!', names: ['Snow Sparkle', 'Frost Breath', 'Icy Glitter', 'Snowstorm Swirl'], fx: ['fall', 'beam', 'ring', 'swirl'], shape: 'flake', cols: ['#ffffff', '#dff4ff', '#86c3f2', '#c6e6ff'] },
+    lumikit: { kind: 'star', icon: '⭐', sniff: 'I can see so many stars from here!', names: ['Star Twinkle', 'Comet Dash', 'Starlight Glow', 'Shooting Star'], evoNames: ['Supernova Twinkle', 'Comet Storm', 'Galaxy Glow', 'Meteor Shower'], fx: ['fall', 'comet', 'ring', 'comets'], shape: 'star', cols: ['#ffe27a', '#fff3c4', '#b9a4ff', '#ffffff'] },
+    moonfoal: { kind: 'moon', icon: '🌙', sniff: 'The moon looks so close tonight!', names: ['Moon Glow', 'Rainbow Mane', 'Moonbeam', 'Starlit Gallop'], evoNames: ['Full Moon Glow', 'Rainbow Wings', 'Mega Moonbeam', 'Starlit Flight'], fx: ['ring', 'rainbow', 'moonbeam', 'gallop'], shape: 'star', cols: ['#fff2b0', '#f4a6d0', '#c49cf0', '#ffffff'] },
+    frostwhisk: { kind: 'snow', icon: '❄️', sniff: 'I can smell snow up there! I love snow!', names: ['Snow Sparkle', 'Frost Breath', 'Icy Glitter', 'Snowstorm Swirl'], evoNames: ['Blizzard Sparkle', 'Frost Beam', 'Diamond Glitter', 'Snowstorm Tornado'], fx: ['fall', 'beam', 'ring', 'swirl'], shape: 'flake', cols: ['#ffffff', '#dff4ff', '#86c3f2', '#c6e6ff'] },
   };
 
   // ---------- Save ----------
@@ -1214,7 +1464,7 @@ body.spelling .talk { display: none; }
   function drawHud() {
     if (!save.companion) { hudEl.hidden = true; return; }
     const c = CREATURES.find(x => x.id === save.companion), p = POWERS[save.companion];
-    hudEl.hidden = false; compChip.textContent = c.name + ((save.badges || []).length ? '  🏅' + save.badges.length : '');
+    hudEl.hidden = false; compChip.textContent = compInfo().name + ((save.badges || []).length ? '  🏅' + save.badges.length : '');
     slotsEl.innerHTML = '';
     for (let i = 0; i < CONFIG.powerSlots; i++) {
       const full = !!save.powers[i] && save.powerCharge[i];
@@ -1247,10 +1497,17 @@ body.spelling .talk { display: none; }
     return { text: 'Open the Frost Gate!', x: 1272, y: 24, say: 'We have the whole Snowflake Key and all four powers! Let\'s go and open the Frost Gate!' };
   }
   let goalText = '';
+  // which way to walk to reach another map
+  function exitToward(to) {
+    if (st.map === 'village') return { x: 1400, y: 60, say: 'First, let\'s climb the snowy stairs to Owl Village. ' };
+    if (st.map === 'caves') return { x: 22, y: 80, say: 'First, let\'s go back out of the Crystal Caves. ' };
+    return to === 'caves' ? { x: 616, y: 50, say: 'First, let\'s go into the Crystal Caves. ' } : { x: 22, y: 80, say: 'First, let\'s go back down the snowy stairs. ' };
+  }
   function showGuide() {
     const g = goal(); if (!g || g.x == null) return;
-    if ((g.map || 'village') === st.map) st.guide = { x: g.x, y: g.y, until: st.t + 330 };
-    else st.guide = st.map === 'owl' ? { x: 22, y: 80, until: st.t + 330 } : { x: 1400, y: 60, until: st.t + 330 };
+    const to = g.map || 'village';
+    if (to === st.map) st.guide = { x: g.x, y: g.y, until: st.t + 330 };
+    else st.guide = Object.assign(exitToward(to), { until: st.t + 330 });
   }
   function refreshGoal() {
     syncCh2();
@@ -1263,12 +1520,13 @@ body.spelling .talk { display: none; }
     if (talking || st.spelling || st.scene || st.mode !== 'village') return;
     const g = goal(); if (!g) return;
     const away = (g.map || 'village') !== st.map;
-    showGuide(); await talk(compInfo().name, (away ? (st.map === 'owl' ? 'First, let\'s go back down the snowy stairs. ' : 'First, let\'s climb the snowy stairs to Owl Village. ') : '') + g.say); endTalk(); showGuide();
+    showGuide(); await talk(compInfo().name, (away ? exitToward(g.map || 'village').say : '') + g.say); endTalk(); showGuide();
   });
 
   // ---------- Game state ----------
   const st = { mode: 'start', t: 0, choose: { selected: -1, parts: [] }, cam: 0, comp: { i: 0, x: 76, tx: 76, face: 1, walking: false }, parts: [], metSpot: save.metSpot, talking: false, arrive: null, pops: [], spelling: false, powersN: save.powers.length, fx: [], lit: save.lit, guide: null, scene: false, gateOpen: save.gateOpen, sleepy: false, sessionStart: 0, fogX: V.FOG_STOPS[save.fogStage], pip: { x: 1010, mood: save.pipFriend ? 'happy' : 'scared', follow: save.pipFriend, moving: false } };
-  const compInfo = () => CREATURES.find(x => x.id === save.companion);
+  const compInfo = () => { const c = CREATURES.find(x => x.id === save.companion); return save.evolved && c ? Object.assign({}, c, { name: EVOLVE.EVO[c.id].name, baseName: c.name }) : c; };
+  const powerNames = () => { const p = POWERS[save.companion]; return save.evolved ? p.evoNames : p.names; };
 
   async function begin() {
     startEl.hidden = true; chime([523, 659, 784]); st.sessionStart = Date.now();
@@ -1332,7 +1590,8 @@ body.spelling .talk { display: none; }
         save.metSpot = true; st.metSpot = true; persist(); chime([659, 784, 988]);
         V.sparkle(st, V.SPOT_X, 100, ['#ffe27a', '#ffffff', '#ff9fcf']);
       }
-      if (n >= WORDS.SPELLS.length) { await talk(S, 'You have woken all four of ' + c.name + '\'s powers! I\'m so proud of you.'); const g = goal(); if (g) await talk(S, 'Here\'s what to do next. ' + g.say.replace(/^Let's/, 'Why not')); endTalk(); showGuide(); return; }
+      if (save.evolved) await talk(S, 'My whiskers! Is that you, ' + c.name + '? Look how big and strong you\'ve grown! And those wings are magnificent!');
+      if (n >= WORDS.SPELLS.length) { await talk(S, 'You have woken all four of ' + c.name + '\'s powers! I\'m so proud of you.'); const g = goal(); if (g && g.x != null) await talk(S, 'Here\'s what to do next. ' + g.say.replace(/^Let's/, 'Why not')); else if (g) await talk(S, 'I can\'t wait to hear about your next big adventure. I think it\'s coming very soon!'); endTalk(); showGuide(); return; }
       if (save.lastPowerDate === today() && save.allowDate !== today()) {
         await talk(S, 'Powers need a good sleep to grow strong. Come back tomorrow, and we\'ll wake your next power!');
         const g = goal(); if (g && g.x !== V.SPOT_X) { await talk(S, 'While you wait, tap the light bulb at the top to see what else to do.'); }
@@ -1463,6 +1722,8 @@ body.spelling .talk { display: none; }
 
   // ---------- Word spells ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const useMic = () => !!SR && save.listen !== false;
+  const SILLY = 'My ears are being silly! Let\'s use pictures instead. ';
   const picsEl = $('pics'), picBtn = $('picBtn'), buildBtn = $('buildBtn'), otherEl = $('otherWays'), buildEl = $('build');
   const spellEl = $('spell'), msgEl = $('spellMsg'), tilesEl = $('tiles'), picEl = $('pic'), micBtn = $('micBtn'), helpBtn = $('helpBtn'), grownEl = $('grownup');
   let spellMsg = '';
@@ -1472,7 +1733,7 @@ body.spelling .talk { display: none; }
   function logTry(e) {
     save.log.push(Object.assign({ d: today() }, e)); if (save.log.length > 600) save.log.splice(0, save.log.length - 600);
     const id = 'w:' + e.w;
-    if (e.r === 'read') { SK.record(id, 'strong'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
+    if (e.r === 'read' || e.r === 'pickedOff') { SK.record(id, 'strong'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
     else if (['picked', 'built', 'helped', 'grownup'].includes(e.r)) { SK.record(id, 'ok'); const dd = daily(); if (!dd.words.includes(e.w)) dd.words.push(e.w); }
     else if (['close', 'miss', 'pickmiss'].includes(e.r)) SK.record(id, 'miss');
     persist();
@@ -1510,15 +1771,15 @@ body.spelling .talk { display: none; }
   }
   function spellWord(word, first, review) {
     return new Promise(resolve => {
-      const ts = WORDS.tiles(word); let misses = 0, nones = 0, helped = false, busy = false;
-      resetCh2Panel(); tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = !!SR; micBtn.hidden = !SR; picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); buildEl.hidden = true; buildEl.innerHTML = ''; tilesEl.hidden = false; $('spellAgain').hidden = false;
+      const ts = WORDS.tiles(word); let misses = 0, nones = 0, helped = false, busy = false, auto = false;
+      resetCh2Panel(); tilesEl.innerHTML = ''; picEl.hidden = true; helpBtn.hidden = true; grownEl.hidden = useMic(); micBtn.hidden = !useMic(); picsEl.hidden = true; picsEl.innerHTML = ''; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); buildEl.hidden = true; buildEl.innerHTML = ''; tilesEl.hidden = false; $('spellAgain').hidden = false;
       ts.forEach((t, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'tile' + (WORDS.VOWELS.includes(t) ? ' vowel' : ''); b.textContent = t;
         b.setAttribute('aria-label', 'Hear the sound ' + t);
         b.addEventListener('click', () => { playSound(t); b.classList.remove('glow'); void b.offsetWidth; b.classList.add('tap'); setTimeout(() => b.classList.remove('tap'), 300); });
         tilesEl.appendChild(b);
       });
-      sayMsg(first ? 'Tap each letter to hear its sound. Then tap the microphone, and read the word out loud!' : review ? 'Do you remember this word? Read it out loud!' : SR ? 'Read this word out loud!' : 'Read this word! Then tap Pictures to find it, or read it to a grown-up.');
+      sayMsg(first ? 'Tap each letter to hear its sound. Then tap the microphone, and read the word out loud!' : review ? 'Do you remember this word? Read it out loud!' : useMic() ? 'Read this word out loud!' : 'Read this word! Then tap Pictures to find it, or read it to a grown-up.');
       const finish = async (r) => {
         if (busy) return; busy = true;
         grownEl.hidden = true; helpBtn.hidden = true; micBtn.disabled = true; otherEl.hidden = true; picsEl.hidden = true; buildEl.hidden = true; tilesEl.hidden = false;
@@ -1540,20 +1801,18 @@ body.spelling .talk { display: none; }
         if (res.error === 'not-allowed' || res.error === 'service-not-allowed') { sayMsg('I can\'t use the microphone. Read it to a grown-up instead!'); grownEl.hidden = false; return; }
         const c = classify(word, res.alts);
         if (c.r === 'read') { finish(helped ? 'helped' : 'read'); return; }
-        if (c.r === 'none') { nones++; sayMsg('My ears didn\'t catch that! Try again, or pick another way.'); otherEl.classList.add('nudge'); if (nones >= 2) grownEl.hidden = false; return; }
-        misses++;
+        if (c.r === 'none') nones++; else misses++;
+        if (c.r !== 'none') logTry({ w: word, r: c.r === 'close' ? 'close' : 'miss', h: c.heard, p: c.r === 'close' ? ts[tileAt(word, c.at)] : undefined });
+        // second try that didn't work: don't keep her stuck on the microphone
+        if (misses + nones >= 2 && !auto) { auto = true; openPics('auto'); return; }
+        if (c.r === 'none') { sayMsg('My ears didn\'t catch that! Try again, or pick another way.'); otherEl.classList.add('nudge'); return; }
         if (c.r === 'close') {
           const ti = tileAt(word, c.at), t = ts[ti], where = ti === 0 ? 'first' : ti === ts.length - 1 ? 'last' : 'middle';
-          logTry({ w: word, r: 'close', h: c.heard, p: t });
           [...tilesEl.children].forEach((b, i) => b.classList.toggle('glow', i === ti));
           if (RECS[t]) { spellMsg = 'I heard ' + c.heard + '. Listen to the ' + where + ' sound. Try again!'; msgEl.textContent = spellMsg; speak('I heard ' + c.heard + '. Listen to the ' + where + ' sound.').then(() => playRec(t)); }
           else sayMsg('I heard ' + c.heard + '. Listen to the ' + where + ' sound... ' + WORDS.SOUNDS[t].say + '. Try again!');
-        } else {
-          logTry({ w: word, r: 'miss', h: c.heard });
-          sayMsg((c.heard ? 'Hmm, I heard ' + c.heard + '. ' : '') + 'Let\'s try again! Tap the letters to hear their sounds.');
-        }
+        } else sayMsg((c.heard ? 'Hmm, I heard ' + c.heard + '. ' : '') + 'Let\'s try again! Tap the letters to hear their sounds.');
         helpBtn.hidden = false; otherEl.classList.add('nudge');
-        if (misses >= 2) grownEl.hidden = false;
       };
       helpBtn.onclick = () => {
         helped = true; logTry({ w: word, r: 'hint' });
@@ -1562,10 +1821,12 @@ body.spelling .talk { display: none; }
         else { const seq = ts.map(t => WORDS.SOUNDS[t].say).join('... ') + '... ' + word + '.'; spellMsg = 'Listen: ' + seq + ' Now you say it!'; speak(spellMsg); }
         [...tilesEl.children].forEach((b, i) => setTimeout(() => { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); }, 700 + i * 650));
       };
-      picBtn.onclick = () => {
+      const openPics = why => {
         if (busy) return;
+        if (!WORDS.icon(word)) { buildBtn.onclick(); return; }
         micBtn.hidden = true; helpBtn.hidden = true; otherEl.hidden = true; grownEl.hidden = true; picsEl.hidden = false; picsEl.innerHTML = '';
-        spellMsg = 'Read the word. Which picture is it?'; msgEl.textContent = spellMsg; speak(spellMsg);
+        spellMsg = 'Read the word. Which picture is it?'; msgEl.textContent = spellMsg; speak((why === 'auto' ? SILLY : '') + spellMsg);
+        if (why === 'auto') grownEl.hidden = false;
         const opts = [word].concat(distractors(word, 2)).sort(() => Math.random() - 0.5); let wrong = 0;
         opts.forEach(o => {
           const b = document.createElement('button'); b.type = 'button'; b.className = 'picopt'; b.setAttribute('aria-label', 'Picture ' + (opts.indexOf(o) + 1));
@@ -1573,7 +1834,7 @@ body.spelling .talk { display: none; }
           b.appendChild(cvp); b.dataset.w = o;
           b.addEventListener('click', () => {
             if (busy) return;
-            if (o === word) { finish(helped || wrong >= 2 ? 'helped' : 'picked'); return; }
+            if (o === word) { finish(helped || wrong >= 2 ? 'helped' : why === 'off' && wrong === 0 ? 'pickedOff' : 'picked'); return; }
             wrong++; logTry({ w: word, r: 'pickmiss', h: o }); b.disabled = true; b.classList.add('nope'); chime([330, 262], 'sine');
             if (wrong >= 2) { [...picsEl.children].forEach(x => { if (x.dataset.w === word) x.classList.add('glow'); }); spellMsg = 'This word says ' + word + '. Tap the glowing picture!'; msgEl.textContent = spellMsg; speak(spellMsg); }
             else { spellMsg = 'Not quite! Look at the letters again. Tap them to hear their sounds.'; msgEl.textContent = spellMsg; speak(spellMsg); }
@@ -1581,6 +1842,7 @@ body.spelling .talk { display: none; }
           picsEl.appendChild(b);
         });
       };
+      picBtn.onclick = () => openPics();
       buildBtn.onclick = async () => {
         if (busy) return;
         micBtn.hidden = true; helpBtn.hidden = true; otherEl.hidden = true; grownEl.hidden = true; tilesEl.hidden = true; buildEl.hidden = false; buildEl.innerHTML = '';
@@ -1608,7 +1870,7 @@ body.spelling .talk { display: none; }
         buildEl.append(slots, pool);
         spellMsg = 'Build the word ' + word + '! Tap the letters in order.'; msgEl.textContent = 'Build the word! Tap the letters in order.'; speak(spellMsg);
       };
-      if (!SR) grownEl.hidden = false;
+      if (!useMic()) setTimeout(() => openPics('off'), 60);
       $('gOk').onclick = () => finish(helped ? 'helped' : 'grownup');
       $('gSkip').onclick = () => finish('skip');
     });
@@ -1835,7 +2097,7 @@ body.spelling .talk { display: none; }
   async function goodnight() {
     const c = compInfo(); st.sleepy = true;
     await talk(c.name, 'Yaaawn... I\'m getting really sleepy.');
-    await talk(c.name, 'Sleep helps our brains keep everything we learned today. ' + (st.map === 'owl' ? 'Let\'s snuggle up in Grandma Hoot\'s cosy tree house!' : 'Let\'s go home to bed!'));
+    await talk(c.name, 'Sleep helps our brains keep everything we learned today. ' + (st.map === 'owl' ? 'Let\'s snuggle up in Grandma Hoot\'s cosy tree house!' : st.map === 'caves' ? 'Let\'s curl up by the glowing crystals.' : 'Let\'s go home to bed!'));
     endTalk();
     const home = st.map === 'owl' ? OWLV.GRAN_X - 34 : 76;
     st.comp.tx = home; st.comp.walking = Math.abs(st.comp.x - home) > 1; st.arrive = null;
@@ -1855,15 +2117,16 @@ body.spelling .talk { display: none; }
     if (talking || st.spelling || st.mode !== 'village' || st.sleepy || st.scene) return;
     const c = compInfo(), p = POWERS[save.companion], kind = p.fx[i];
     if (!save.powerCharge[i]) { askRecharge(c); return; }
-    chime([988, 1318, 1568, 1976], 'sine'); speak(p.names[i] + '!');
-    const nearFog = st.map !== 'owl' && save.fogStage < 3 && st.comp.x > st.fogX - 80;
+    chime([988, 1318, 1568, 1976], 'sine'); speak(powerNames()[i] + '!');
+    const nearFog = st.map === 'village' && save.fogStage < 3 && st.comp.x > st.fogX - 80;
     if (nearFog) st.comp.face = 1;
     addFx(kind, p);
+    if (save.evolved) { setTimeout(() => addFx(kind, p), 260); for (let k = 0; k < 4; k++) setTimeout(() => V.sparkle(st, st.comp.x + (k % 2 ? 22 : -22), V.FEET - 50, p.cols, 14), k * 140); }
     save.powerCharge[i] = false; persist(); drawHud();
     if (nearFog) { clearFog(); return; }
     if (!save.emptyTip) {
       save.emptyTip = true; persist(); await wait(1500);
-      await talk(c.name, 'Whoosh! That used up my ' + p.names[i] + ' power. See how it looks empty now?');
+      await talk(c.name, 'Whoosh! That used up my ' + powerNames()[i] + ' power. See how it looks empty now?');
       await talk(c.name, 'When you want to fill it up again, tap it, and we\'ll read some words together!');
       endTalk();
     }
@@ -1958,7 +2221,7 @@ body.spelling .talk { display: none; }
     st.pops = st.pops.filter(p => st.t - p.t0 < 75);
     st.pops.forEach(p => {
       const age = st.t - p.t0, ic = WORDS.icon(p.w); if (!ic || (age > 60 && age % 4 < 2)) return;
-      const ox = Math.round(st.comp.x - st.cam - 16), oy = Math.round(V.FEET - 46 - 34 - Math.min(age, 20) * 0.4);
+      const ox = Math.round(st.comp.x - st.cam - 16), oy = Math.round(V.FEET - (save.evolved ? 62 : 46) - 34 - Math.min(age, 20) * 0.4);
       for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const v = ic.data[(y >> 1) * 16 + (x >> 1)]; if (!v) continue; const X = ox + x, Y = oy + y; if (X >= 0 && Y >= 0 && X < W && Y < H) buf[Y * W + X] = v; }
     });
   }
@@ -1982,7 +2245,12 @@ body.spelling .talk { display: none; }
 
   // ---------- Settings ----------
   const setEl = $('settings'), listEl = $('voiceList'), resetBtn = $('reset');
-  $('gear').addEventListener('click', () => { setEl.hidden = false; drawVoices(); drawProgress(); drawSession(); drawRecorder(); $('closeSet').focus(); });
+  $('gear').addEventListener('click', () => { setEl.hidden = false; drawVoices(); drawProgress(); drawSession(); drawListen(); drawRecorder(); $('closeSet').focus(); });
+  function drawListen() {
+    const el = $('listenBtns'); el.innerHTML = '';
+    if (!SR) { el.textContent = 'This browser can\'t listen, so she always uses pictures and building.'; return; }
+    [[true, '🎤 Listening on'], [false, '🖼 Off: pictures and building']].forEach(([on, label]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('aria-pressed', String((save.listen !== false) === on)); b.addEventListener('click', () => { save.listen = on; persist(); drawListen(); }); el.appendChild(b); });
+  }
   function drawSession() {
     const el = $('sessionBtns'); el.innerHTML = '';
     [[10, '10 min'], [15, '15 min'], [20, '20 min'], [0, 'No limit']].forEach(([m, label]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('aria-pressed', String(save.sessionMin === m)); b.addEventListener('click', () => { save.sessionMin = m; persist(); drawSession(); }); el.appendChild(b); });
@@ -2042,14 +2310,14 @@ body.spelling .talk { display: none; }
     const facts = Object.keys(save.skills).filter(k => /^[as]:/.test(k) && save.skills[k].seen).sort();
     if (facts.length) addGroup('Adding and taking away', facts.map(k => [k, k.slice(2).replace('-', ' − ').replace('+', ' + ')]));
     progressCh2(addGroup, map);
-    const key = document.createElement('p'); key.className = 'mapkey'; key.textContent = 'Grey: not started · Amber: learning · Green: mastered (answered alone on 2 separate days) · • due for review'; map.appendChild(key);
+    const key = document.createElement('p'); key.className = 'mapkey'; key.textContent = 'Grey: not started · Amber: learning · Light green: secure (right on her own on 3 separate days) · Green: mastered (also right 3+ weeks later, no misses) · • due for review'; map.appendChild(key);
     const dd = daily(); const td = document.createElement('p'); td.textContent = 'Today: ' + dd.words.length + ' words read, ' + (dd.pages || 0) + ' story pages read, ' + dd.bonds + ' number bonds, ' + dd.lanterns + ' lantern' + (dd.lanterns === 1 ? '' : 's') + ' lit. Wishing Tree: ' + save.lit + ' of 10.'; map.appendChild(td);
     el.appendChild(map);
     const words = {}, sounds = {};
     save.log.forEach(e => {
       if (!e.w) return;
       const w = words[e.w] || (words[e.w] = { read: 0, picked: 0, helped: 0, missed: 0, heard: [] });
-      if (e.r === 'read') w.read++; else if (e.r === 'picked' || e.r === 'built') w.picked++; else if (e.r === 'helped' || e.r === 'grownup') w.helped++; else if (e.r === 'close' || e.r === 'miss' || e.r === 'pickmiss') { w.missed++; if (e.h && !w.heard.includes(e.h)) w.heard.push(e.h); }
+      if (e.r === 'read') w.read++; else if (e.r === 'picked' || e.r === 'built' || e.r === 'pickedOff') w.picked++; else if (e.r === 'helped' || e.r === 'grownup') w.helped++; else if (e.r === 'close' || e.r === 'miss' || e.r === 'pickmiss') { w.missed++; if (e.h && !w.heard.includes(e.h)) w.heard.push(e.h); }
       if (e.r === 'close' && e.p) sounds[e.p] = (sounds[e.p] || 0) + 1;
     });
     const keys = Object.keys(words);
@@ -2074,12 +2342,14 @@ body.spelling .talk { display: none; }
   const OWL = OWLV;
   const VMAP = { render: V.renderVillage, hotspots: V.hotspots, maxX: V.maxX, MIN_X: V.MIN_X, WW: V.WW };
   const OMAP = { render: OWL.render, hotspots: OWL.hotspots, maxX: OWL.maxX, MIN_X: OWL.MIN_X, WW: OWL.WW };
-  function MP() { return st.map === 'owl' ? OMAP : VMAP; }
+  const CMAP = { render: CAVES.render, hotspots: CAVES.hotspots, maxX: CAVES.maxX, MIN_X: CAVES.MIN_X, WW: CAVES.WW };
+  function MP() { return st.map === 'owl' ? OMAP : st.map === 'caves' ? CMAP : VMAP; }
 
   if (!save.map) save.map = 'village';
   if (!save.badges) save.badges = [];
   if (!save.ch2) save.ch2 = { visited: false, met: false, pages: {}, story: false, sci: false, lessons: 0, tricky: {} };
   if (!save.quests) save.quests = [];
+  Object.assign(save.ch2, Object.assign({ caveOpen: false, wordLit: 0, bridge: 0, glimmer: false }, save.ch2));
   st.map = save.map;
   const GRAN = 'Grandma Hoot', OWLET_NAMES = ['Hoo', 'Tuft', 'Puff'];
 
@@ -2097,8 +2367,11 @@ body.spelling .talk { display: none; }
     a: { hint: 'On its own, a says uh.', mark: [0], confuse: ['at', 'and'] },
     was: { hint: 'The a makes an o sound.', mark: [1], confuse: ['saw', 'wash'] },
     my: { hint: 'The y makes an eye sound, like in sky.', mark: [1], confuse: ['me', 'may'] },
+    we: { hint: 'The e says ee, like in tree.', mark: [1], confuse: ['wet', 'me'] },
+    you: { hint: 'The o and u together say oo.', mark: [1, 2], confuse: ['yes', 'yum'] },
+    said: { hint: 'The a and i together say e, like in bed.', mark: [1, 2], confuse: ['sad', 'sand'] },
   };
-  const TRICKY_ORDER = ['the', 'is', 'a', 'was', 'my'];
+  const TRICKY_ORDER = ['the', 'is', 'a', 'was', 'my', 'we', 'you', 'said'];
   const bare = w => w.toLowerCase().replace(/[^a-z']/g, '');
   const isTricky = w => !!TRICKY[bare(w)];
 
@@ -2107,12 +2380,15 @@ body.spelling .talk { display: none; }
     { id: 'scientist', icon: '🔬', name: 'Little Scientist', how: 'Did a melting and freezing experiment' },
     { id: 'teacher', icon: '🍎', name: 'Super Teacher', how: 'Taught a lesson at Owl School' },
     { id: 'story', icon: '📖', name: 'Story Keeper', how: 'Saved Grandma Hoot\'s storybook' },
-    { id: 'evolve', icon: '✨', name: '???', how: 'A secret, hidden in the Crystal Caves' },
+    { id: 'evolve', icon: '🪽', name: 'Brave and Kind', how: 'Helped your companion evolve in the Crystal Caves' },
   ];
 
   function syncCh2() {
-    st.pagesLeft = save.ch2.met ? PAGES.filter(p => !save.ch2.pages[p.id]).map(p => p.id) : [];
-    st.ch2NeedsMeet = !save.ch2.met;
+    const c2 = save.ch2;
+    st.pagesLeft = c2.met ? PAGES.filter(p => !c2.pages[p.id]).map(p => p.id) : [];
+    st.ch2NeedsMeet = !c2.met; st.caveOpen = c2.caveOpen;
+    st.wordLit = c2.wordLit; st.bridge = c2.bridge; st.bridgeDone = c2.bridge >= 5; st.glimmer = c2.glimmer ? 'out' : 'hide';
+    if (!st.evoAnim) { st.comp.evo = save.evolved ? EVOLVE.EVO[save.companion] : null; st.heartGlow = save.evolved ? 0.5 : c2.glimmer ? 0.25 : 0; }
   }
   function placeOnLoad() {
     st.map = save.map || 'village';
@@ -2126,7 +2402,12 @@ body.spelling .talk { display: none; }
     const left = PAGES.filter(p => !c2.pages[p.id]);
     if (left.length) { const [name, x, y] = PAGE_PLACE[left[0].id]; return { map: 'owl', text: 'Frozen pages ' + (3 - left.length) + '/3', x, y, say: 'Let\'s find the next frozen page. It\'s at ' + name + '!' }; }
     if (!c2.story) return { map: 'owl', text: 'Story time with Grandma', x: G, y: 62, say: 'We found all three pages! Let\'s take them to Grandma Hoot for story time.' };
-    return { map: 'owl', text: 'Crystal Caves: coming soon!', x: OWL.CAVE_X, y: 44, say: 'Grandma says the secret of growing into a new form is hidden in the Crystal Caves. That adventure is coming very soon!' };
+    if (!c2.caveOpen) return { map: 'owl', text: 'Open the Crystal Caves', x: OWL.CAVE_X, y: 44, say: 'Grandma says the secret of growing into a new form is hidden in the Crystal Caves. Let\'s go and see if we can get in!' };
+    if (c2.wordLit < 3) return { map: 'caves', text: 'Light the word crystals', x: CAVES.WORDS_X, y: 64, say: 'It\'s so dark in here! Let\'s light up the three word crystals by reading them.' };
+    if (c2.bridge < 5) return { map: 'caves', text: 'Build the crystal bridge', x: 317, y: 98, say: 'We need to cross that deep, dark gap. Let\'s light up the crystal stepping stones!' };
+    if (!c2.glimmer) return { map: 'caves', text: 'Who is hiding?', x: CAVES.GLIM_X, y: 62, say: 'I saw two little eyes peeking out from behind those crystals. I think someone is hiding!' };
+    if (!save.evolved) return { map: 'caves', text: 'The Heart Crystal', x: CAVES.HEART_X, y: 30, say: 'The Heart Crystal is right at the end of the cave. Let\'s go and see it!' };
+    return { map: st.map, text: 'Chapter 3: coming soon!', x: null, say: 'With our new wings, we can fly to places we\'ve never been! Our next adventure is coming very soon.' };
   }
 
   // ---------- Overlays: fade, cards, badge book ----------
@@ -2159,10 +2440,12 @@ body.spelling .talk { display: none; }
   $('bookClose').addEventListener('click', () => { bookEl.hidden = true; });
 
   async function travel(to) {
-    st.scene = true; fadeEl.hidden = false; void fadeEl.offsetWidth; fadeEl.classList.add('on'); chime(to === 'owl' ? [523, 659, 784, 1046] : [1046, 784, 659, 523], 'sine'); await wait(500);
+    st.scene = true; fadeEl.hidden = false; void fadeEl.offsetWidth; fadeEl.classList.add('on'); chime(to === 'village' ? [1046, 784, 659, 523] : [523, 659, 784, 1046], 'sine'); await wait(500);
+    const from = st.map, ARRIVE = { 'village>owl': [56, 1], 'owl>village': [1350, -1], 'owl>caves': [60, 1], 'caves>owl': [574, -1] };
+    const [ax, af] = ARRIVE[from + '>' + to] || [60, 1];
     st.map = to; save.map = to; persist();
-    st.comp.x = st.comp.tx = to === 'owl' ? 56 : 1350; st.comp.face = to === 'owl' ? 1 : -1; st.comp.walking = false; st.arrive = null;
-    st.pip.x = st.comp.x + (to === 'owl' ? -28 : 28); st.parts = []; st.fx = []; st.guide = null;
+    st.comp.x = st.comp.tx = ax; st.comp.face = af; st.comp.walking = false; st.arrive = null;
+    st.pip.x = st.comp.x - af * 28; st.parts = []; st.fx = []; st.guide = null;
     st.cam = Math.max(0, Math.min(MP().WW - W, st.comp.x - W / 2));
     refreshGoal(); fadeEl.classList.remove('on'); await wait(500); fadeEl.hidden = true; st.scene = false;
   }
@@ -2200,13 +2483,20 @@ body.spelling .talk { display: none; }
     }
     g2.putImageData(id, 0, 0); return cv2;
   }
+  function near(a, b) {
+    if (a === b) return true; if (a.length < 3 || b.length < 3 || Math.abs(a.length - b.length) > 1) return false;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length] <= 1;
+  }
+  // Long sentences give the phone more chances to mishear, so be generous: half the words, at least one of the two nouns.
   function scoreSentence(page, alts) {
     const target = page.text.split(' ').map(bare);
     let best = { ok: false, ratio: -1, missing: target.slice(), heard: '' };
     alts.forEach(a => {
       const got = clean(a).split(' '), pool = got.slice(), missing = [];
-      target.forEach(w => { const i = pool.indexOf(w); if (i >= 0) pool.splice(i, 1); else missing.push(w); });
-      const ratio = 1 - missing.length / target.length, ok = page.nouns.every(n => got.includes(n)) && ratio >= 0.6;
+      target.forEach(w => { let i = pool.indexOf(w); if (i < 0) i = pool.findIndex(g2 => near(w, g2)); if (i >= 0) pool.splice(i, 1); else missing.push(w); });
+      const ratio = 1 - missing.length / target.length, nouns = page.nouns.filter(n => !missing.includes(n)).length, ok = nouns >= 1 && ratio >= 0.5;
       if ((ok && !best.ok) || (ok === best.ok && ratio > best.ratio)) best = { ok, ratio, missing, heard: clean(a) };
     });
     return best;
@@ -2220,7 +2510,7 @@ body.spelling .talk { display: none; }
       let misses = 0, nones = 0, helped = false, busy = false;
       resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.hidden = false; tilesEl.classList.add('sentence');
       spicEl.hidden = false; spicEl.innerHTML = ''; spicEl.appendChild(scenePic(page.subj, page.place, true));
-      micBtn.hidden = !SR; picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); grownEl.hidden = !!SR; $('spellAgain').hidden = false;
+      micBtn.hidden = !useMic(); picBtn.hidden = false; buildBtn.hidden = false; otherEl.hidden = false; otherEl.classList.remove('nudge'); grownEl.hidden = useMic(); $('spellAgain').hidden = false;
       const tileEls = words.map(wd => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'wtile' + (isTricky(wd) ? ' tricky' : ''); b.textContent = wd;
         b.setAttribute('aria-label', isTricky(wd) ? 'Tricky word: hear it' : 'Hear the sounds in ' + bare(wd));
@@ -2237,7 +2527,7 @@ body.spelling .talk { display: none; }
         hideWordBits(); tilesEl.hidden = false;
         if (r === 'skip') { logPage(page.id, 'skip'); sayMsg('That\'s okay! The page will wait for us. Let\'s try again another time.'); await wait(1800); resolve(false); return; }
         logPage(page.id, r);
-        SK.record('p:' + page.id, r === 'read' ? 'strong' : 'ok'); const dd = daily(); dd.pages = (dd.pages || 0) + 1; persist();
+        SK.record('p:' + page.id, r === 'read' || r === 'pickedOff' ? 'strong' : 'ok'); const dd = daily(); dd.pages = (dd.pages || 0) + 1; persist();
         if (r === 'read') words.filter(isTricky).forEach(wd => SK.record('t:' + bare(wd), 'strong'));
         spicEl.innerHTML = ''; const clear = scenePic(page.subj, page.place, false); clear.className = 'thaw'; spicEl.appendChild(clear);
         tilesEl.classList.add('win'); setTimeout(() => tilesEl.classList.remove('win'), 700);
@@ -2252,17 +2542,10 @@ body.spelling .talk { display: none; }
         const res = await listen();
         micBtn.disabled = false; micBtn.textContent = '🎤 Read it!'; micBtn.dataset.on = 'false';
         if (res.error === 'not-allowed' || res.error === 'service-not-allowed') { sayMsg('I can\'t use the microphone. Read it to a grown-up instead!'); grownEl.hidden = false; return; }
-        if (!res.alts.length) { nones++; sayMsg('My ears didn\'t catch that! Try again, or pick another way.'); otherEl.classList.add('nudge'); if (nones >= 2) grownEl.hidden = false; return; }
-        const sc = scoreSentence(page, res.alts);
-        if (sc.ok) { finish(helped ? 'helped' : 'read'); return; }
-        misses++; logPage(page.id, 'miss');
-        const miss = page.nouns.find(n => sc.missing.includes(n)) || sc.missing[0];
-        const idx = words.findIndex(wd => bare(wd) === miss);
-        tileEls.forEach((b, i) => b.classList.toggle('glow', i === idx));
-        if (miss && TRICKY[miss]) sayMsg('So close! This one is a tricky word. Tap it to hear it, then read the page again.');
-        else sayMsg('So close! Let\'s look at the glowing word again. Tap it to hear its sounds.');
-        helpBtn.hidden = false; otherEl.classList.add('nudge');
-        if (misses >= 2) grownEl.hidden = false;
+        const sc = res.alts.length ? scoreSentence(page, res.alts) : null;
+        if (sc && sc.ok) { finish(helped ? 'helped' : 'read'); return; }
+        if (sc) { misses++; logPage(page.id, 'miss'); } else nones++;
+        openPics('auto');
       };
       helpBtn.onclick = async () => {
         if (busy) return; helped = true; logPage(page.id, 'hint');
@@ -2270,17 +2553,18 @@ body.spelling .talk { display: none; }
         for (let i = 0; i < tileEls.length; i++) { tileEls[i].classList.add('reading'); await speak(bare(words[i])); tileEls[i].classList.remove('reading'); }
         spellMsg = 'Now you read it!'; msgEl.textContent = spellMsg; speak(spellMsg);
       };
-      picBtn.onclick = () => {
+      const openPics = why => {
         if (busy) return;
         hideWordBits(); picsEl.hidden = false; picsEl.innerHTML = '';
-        spellMsg = 'Read the page. Which picture matches?'; msgEl.textContent = spellMsg; speak(spellMsg);
+        spellMsg = 'Read the page. Which picture matches?'; msgEl.textContent = spellMsg; speak((why === 'auto' ? SILLY : '') + spellMsg);
+        if (why === 'auto') { grownEl.hidden = false; tileEls.forEach(b => b.classList.remove('glow')); }
         const opts = [[page.subj, page.place]].concat(page.alts).sort(() => Math.random() - 0.5); let wrong = 0;
         opts.forEach(([sj, pl]) => {
-          const ok = sj === page.subj && pl === page.place, b = document.createElement('button'); b.type = 'button'; b.className = 'picopt scene';
+          const ok = sj === page.subj && pl === page.place, b = document.createElement('button'); b.type = 'button'; b.className = 'picopt scene'; b.dataset.k = sj + '-' + pl;
           b.setAttribute('aria-label', 'Picture ' + (opts.findIndex(o => o[0] === sj && o[1] === pl) + 1)); b.appendChild(scenePic(sj, pl, false));
           b.addEventListener('click', () => {
             if (busy) return;
-            if (ok) { finish(helped || wrong >= 2 ? 'helped' : 'picked'); return; }
+            if (ok) { finish(helped || wrong >= 2 ? 'helped' : why === 'off' && wrong === 0 ? 'pickedOff' : 'picked'); return; }
             wrong++; logPage(page.id, 'pickmiss'); b.disabled = true; b.classList.add('nope'); chime([330, 262], 'sine');
             if (wrong >= 2) { [...picsEl.children].forEach(x => { if (!x.disabled) x.classList.add('glow'); }); spellMsg = 'This one matches! Tap the glowing picture.'; msgEl.textContent = spellMsg; speak(spellMsg); }
             else { spellMsg = 'Not quite! Look at the words again. Who is it, and where are they?'; msgEl.textContent = spellMsg; speak(spellMsg); }
@@ -2288,6 +2572,7 @@ body.spelling .talk { display: none; }
           picsEl.appendChild(b);
         });
       };
+      picBtn.onclick = () => openPics();
       buildBtn.onclick = () => {
         if (busy) return;
         hideWordBits(); buildEl.hidden = false; buildEl.innerHTML = ''; tilesEl.hidden = true;
@@ -2316,6 +2601,7 @@ body.spelling .talk { display: none; }
       };
       $('gOk').onclick = () => finish(helped ? 'helped' : 'grownup');
       $('gSkip').onclick = () => finish('skip');
+      if (!useMic()) setTimeout(() => openPics('off'), 60);
     });
   }
 
@@ -2408,10 +2694,10 @@ body.spelling .talk { display: none; }
       resetCh2Panel(); hideWordBits(); tilesEl.innerHTML = ''; tilesEl.classList.add('card');
       const big = document.createElement('span'); big.className = 'tile wordcard'; big.textContent = word; tilesEl.appendChild(big);
       msgEl.textContent = 'What does it really say?'; spellMsg = 'What does it really say?';
-      micBtn.hidden = !SR; judgeEl.hidden = false; judgeEl.innerHTML = '';
+      micBtn.hidden = !useMic(); judgeEl.hidden = false; judgeEl.innerHTML = '';
       const done = async (strong, okOrMiss) => { micBtn.hidden = true; judgeEl.hidden = true; SK.record('t:' + word, okOrMiss || (strong ? 'strong' : 'miss')); if (strong || okOrMiss === 'ok') { chime([784, 988, 1175]); await speak('Yes! It says ' + word + '. Thank you, teacher!'); } res(strong || okOrMiss === 'ok'); };
       const opts = [word, said].sort(() => Math.random() - 0.5);
-      const lab = document.createElement('span'); lab.className = 'jlab'; lab.textContent = SR ? 'Or tap the one that sounds right:' : 'Tap the one that sounds right:'; judgeEl.appendChild(lab);
+      const lab = document.createElement('span'); lab.className = 'jlab'; lab.textContent = useMic() ? 'Or tap the one that sounds right:' : 'Tap the one that sounds right:'; judgeEl.appendChild(lab);
       opts.forEach((o, i) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'jbtn ear'; b.textContent = '🔊 ' + (i + 1);
         let heard = false;
@@ -2425,10 +2711,9 @@ body.spelling .talk { display: none; }
         micBtn.disabled = true; micBtn.textContent = '👂 Listening…'; micBtn.dataset.on = 'true';
         const r = await listen(); micBtn.disabled = false; micBtn.textContent = '🎤 Read it!'; micBtn.dataset.on = 'false';
         if (r.alts.some(a => clean(a).split(' ').includes(word))) done(true);
-        else if (!r.alts.length) { msgEl.textContent = 'My ears didn\'t catch that! Try again, or tap a sound button.'; speak(msgEl.textContent); }
-        else { msgEl.textContent = 'Hmm, not quite. Tap the sound buttons to hear each one.'; speak(msgEl.textContent); }
+        else { micBtn.hidden = true; msgEl.textContent = 'My ears are being silly! Tap the sound buttons instead.'; speak(msgEl.textContent); judgeEl.classList.add('nudge'); }
       };
-      await speak(SR ? 'Read it out loud for the owlets! Or tap a sound button to hear it, then tap it again to choose.' : 'Tap a sound button to hear it. Tap it again to choose it.');
+      await speak(useMic() ? 'Read it out loud for the owlets! Or tap a sound button to hear it, then tap it again to choose.' : 'Tap a sound button to hear it. Tap it again to choose it.');
     });
   }
 
@@ -2549,6 +2834,7 @@ body.spelling .talk { display: none; }
       const n = PAGES.filter(p => c2.pages[p.id]).length;
       if (n < 3) { const next = PAGES.find(p => !c2.pages[p.id]); await talk(GRAN, 'You\'ve found ' + n + ' of my 3 pages. Is that one sparkling over at ' + PAGE_PLACE[next.id][0] + '?'); endTalk(); showGuide(); return; }
       if (!c2.story) { const a = await ask(GRAN, 'You found all of my pages! Shall we have story time?', ['Yes!', 'Later']); endTalk(); if (a === 0) await runBedtime(); return; }
+      if (save.evolved && !save.ch2.granSaw) { save.ch2.granSaw = true; persist(); await talk(GRAN, 'Oh my feathers! ' + c.name + ', you\'ve evolved! Those wings are beautiful. I knew you two could do it.'); }
       const a = await ask(GRAN, 'Hello again, Story Keeper! Would you like to read the story with the owlets again?', ['Yes!', 'Not now']); endTalk();
       if (a === 0) await runBedtime();
     },
@@ -2572,9 +2858,14 @@ body.spelling .talk { display: none; }
     },
     async caves() {
       const c = compInfo();
-      await talk(c.name, 'The Crystal Caves! Ooh, it\'s all sparkly. But a thick wall of ice is blocking the way.');
-      await talk('Pip', save.ch2.story ? 'Grandma says the caves will open when the time is right. I think it\'s going to be very soon!' : 'Grandma knows all about the caves. Maybe we can ask her once we\'ve helped her?');
-      endTalk();
+      if (!save.ch2.story) {
+        await talk(c.name, 'The Crystal Caves! Ooh, it\'s all sparkly. But a thick wall of ice is blocking the way.');
+        await talk('Pip', 'Grandma knows all about the caves. Maybe we can ask her once we\'ve helped her?');
+        endTalk(); return;
+      }
+      if (!save.ch2.caveOpen) { await openCaves(); return; }
+      const a = await ask('Pip', 'Shall we go into the Crystal Caves?', ['Yes!', 'Not yet']); endTalk();
+      if (a === 0) await travel('caves');
     },
   });
 
@@ -2582,12 +2873,193 @@ body.spelling .talk { display: none; }
   function progressCh2(addGroup, map) {
     const seenT = TRICKY_ORDER.filter(w => save.ch2.tricky[w]);
     if (seenT.length) addGroup('Tricky words', seenT.map(w => ['t:' + w, w]));
-    const seenP = PAGES.filter(p => save.skills['p:' + p.id]);
+    const seenP = PAGES.concat(CAVE_PAGES).filter(p => save.skills['p:' + p.id]);
     if (seenP.length) addGroup('Story pages (sentences)', seenP.map(p => ['p:' + p.id, p.text]));
     const b = document.createElement('p'); b.textContent = 'Badges: ' + (save.badges.length ? save.badges.map(id => BADGES.find(x => x.id === id).name).join(', ') : 'none yet') + '.';
     map.appendChild(b);
   }
-  if (location.hash === '#debug') window.__ch2 = { runPage, runSchool, runScience, runBedtime, travel };
+  // ======================= Crystal Caves and evolution =======================
+  // (inserted into chapter2.js at build time)
+  const CAVE_PAGES = [
+    { id: 'c1', text: 'We got a fish in a pot.', subj: 'fish', place: 'pot', alts: [['fish', 'cup'], ['pig', 'pot']], nouns: ['fish', 'pot'] },
+    { id: 'c2', text: 'You had a hat on a dog!', subj: 'hat', place: 'dog', alts: [['hat', 'pig'], ['cup', 'dog']], nouns: ['hat', 'dog'] },
+    { id: 'c3', text: 'The fish said, "I am in a cup!"', subj: 'fish', place: 'cup', alts: [['fish', 'pot'], ['pig', 'cup']], nouns: ['fish', 'cup'] },
+  ];
+  const CRYSTAL_X = [CAVES.WORDS_X - 20, CAVES.WORDS_X, CAVES.WORDS_X + 20];
+  const eqnEl = $('eqn');
+
+  async function openCaves() {
+    const c = compInfo();
+    await talk(c.name, 'Look! There are three glowing marks carved into the ice wall.');
+    await talk('Pip', 'Grandma says the wall opens for anyone who can read the three magic words carved in the ice!');
+    const a = await ask('Pip', 'Shall we read the magic words?', ['Yes!', 'Later']); endTalk();
+    if (a !== 0) return;
+    st.caveRunes = 0; openPanel();
+    for (const w of weakest(learnedWords(), 3)) { await spellWord(w, false, true); st.caveRunes++; chime([659 + st.caveRunes * 120], 'triangle'); }
+    closePanel();
+    st.scene = true; chime([523, 659, 784, 1046, 1318]);
+    for (let k = 0; k < 6; k++) setTimeout(() => V.sparkle(st, 616, 90 + Math.random() * 25, ['#ffffff', '#cfe9ff', '#ffe27a'], 18), k * 150);
+    await wait(1000); save.ch2.caveOpen = true; st.caveRunes = 0; persist(); refreshGoal(); st.scene = false;
+    await talk(c.name, 'The ice is melting! The Crystal Caves are open!');
+    await talk('Pip', 'Come on, let\'s go in! Stay close to me.');
+    endTalk();
+    await travel('caves');
+    await talk(c.name, 'Wow... it\'s dark in here. But listen... can you hear the crystals humming?');
+    await talk('Pip', 'Look at those three crystals! They have words inside them.');
+    endTalk(); showGuide();
+  }
+
+  async function runCrystals() {
+    const c = compInfo();
+    await talk(c.name, 'Three crystals, but they\'re all dark. Each one has words written inside it!');
+    await talk('Pip', 'The crystals in this cave light up when somebody reads them. Let\'s try!');
+    endTalk();
+    for (let i = save.ch2.wordLit; i < 3; i++) {
+      const page = CAVE_PAGES[i];
+      openPanel(); await introNewTrickyIn(page.text); const ok = await readSentence(page); closePanel();
+      if (!ok) { await talk(c.name, 'That\'s okay. The crystal will wait for us!'); endTalk(); return; }
+      save.ch2.wordLit = i + 1; persist(); refreshGoal();
+      chime([784, 988, 1175, 1568]); for (let k = 0; k < 3; k++) setTimeout(() => V.sparkle(st, CRYSTAL_X[i], 92, ['#ffffff', '#bfe9ff', '#c9bcff'], 18), k * 160);
+      if (i < 2) { await talk(c.name, (i === 0 ? 'One crystal is glowing!' : 'Two crystals are glowing!') + ' Let\'s read the next one.'); endTalk(); }
+    }
+    await talk(c.name, 'All three crystals are glowing! Now we can see across the cave.');
+    await talk('Pip', 'There\'s a deep, dark gap ahead. And look, there are crystal stepping stones, but they\'re fast asleep...');
+    endTalk(); showGuide();
+  }
+
+  // Quick number bonds with just the numbers. If she's stuck, the ten-frame comes back to help.
+  function bridgeRound(k) {
+    return new Promise(async resolve => {
+      const need = 10 - k; let tried = false;
+      frameEl.hidden = true; looseEl.hidden = true; numsEl.innerHTML = ''; numsEl.hidden = false; eqnEl.hidden = false;
+      eqnEl.textContent = ''; const show = ans => { eqnEl.innerHTML = ''; [String(k), ' + '].forEach(t => eqnEl.append(t)); const bl = document.createElement('span'); bl.className = 'blank' + (ans ? ' filled' : ''); bl.textContent = ans ? String(need) : '?'; eqnEl.append(bl, ' = 10'); };
+      show(false);
+      for (let i = 1; i <= 9; i++) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'num'; b.textContent = i;
+        b.addEventListener('click', async () => {
+          if (tried) return; tried = true; numsEl.hidden = true;
+          if (i === need) { show(true); SK.record('b:' + k, 'strong'); daily().bonds++; persist(); chime([784, 988, 1175]); await bsay('Yes! ' + k + ' and ' + need + ' make ten!'); await wait(400); resolve(true); return; }
+          SK.record('b:' + k, 'miss'); daily().bonds++; persist(); b.classList.add('nope'); chime([330, 262], 'sine');
+          await bsay('Not quite. Let\'s use the crystal frame to help!');
+          frameEl.hidden = false; drawFrame(k); await wait(300);
+          for (let j = k; j < 10; j++) { drawFrame(j + 1); frameEl.children[j].classList.add('count'); chime([660 + j * 40], 'sine'); await speak(String(j - k + 1)); await wait(120); }
+          show(true); await bsay(k + ' and ' + need + ' make ten!'); await wait(500); frameEl.hidden = true; resolve(false);
+        });
+        numsEl.appendChild(b);
+      }
+      await bsay(k + ' and how many more make ten?');
+    });
+  }
+  async function runBridge() {
+    const c = compInfo();
+    if (save.ch2.wordLit < 3) { await talk(c.name, 'It\'s too dark to see where to step! Maybe the word crystals can light the way.'); endTalk(); showGuide(); return; }
+    if (save.ch2.bridge >= 5) return;
+    await talk('Pip', 'Each stepping stone has a number puzzle on it. Solve it, and the stone wakes up!');
+    await talk(c.name, 'Remember the firefly lanterns? It\'s the same kind of puzzle, but with just the numbers this time!');
+    endTalk();
+    st.spelling = true; document.body.classList.add('spelling'); bondsEl.hidden = false;
+    for (const k of pickBonds(5 - save.ch2.bridge)) {
+      await bridgeRound(k);
+      const i = save.ch2.bridge; save.ch2.bridge++; persist(); st.bridge = save.ch2.bridge;
+      chime([523 + i * 110, 659 + i * 110]); V.sparkle(st, CAVES.STONES[i], 118, ['#ffffff', '#bfe9ff'], 14); await wait(400);
+    }
+    bondsEl.hidden = true; frameEl.hidden = false; eqnEl.hidden = true; numsEl.hidden = false; document.body.classList.remove('spelling'); st.spelling = false;
+    refreshGoal();
+    await talk(c.name, 'All five stepping stones are awake! The bridge is ready. Let\'s cross!');
+    endTalk();
+    st.comp.tx = CAVES.CHASM1 + 24; st.comp.walking = true; st.arrive = null; showGuide();
+  }
+
+  async function runGlimmer() {
+    const c = compInfo();
+    if (save.ch2.bridge < 5) { await talk(c.name, 'We can\'t get over there yet. We need to cross that dark gap first!'); endTalk(); showGuide(); return; }
+    if (save.ch2.glimmer) { await talk('Glimmer', 'Hi again, friends! I\'m so happy you came back.'); endTalk(); return; }
+    st.comp.face = 1;
+    await talk(c.name, 'Shh... look. Two little eyes, peeking out from behind the crystals.');
+    const f = await ask(c.name, 'How do you think they are feeling?', ['😳 Shy and a bit scared', '😠 Angry', '🤪 Silly'], undefined, true);
+    logEmo('glimmer-feels', ['shy', 'angry', 'silly'][f], f === 0);
+    await talk(c.name, f === 0 ? 'I think so too. When we meet someone new, we can feel shy.' : 'Hmm, they\'re hiding and peeking out. I think they feel shy, and maybe a bit scared.');
+    let h = -1;
+    for (let tries = 0; tries < 3; tries++) {
+      h = await ask(c.name, 'What could we do to help a shy friend feel safe?', ['🙂 Smile and say hi softly', '📢 Shout "Come out!"', '⏳ Wait patiently for them'], undefined, true);
+      logEmo('glimmer-help', ['gentle', 'shout', 'wait'][h], h !== 1);
+      if (h !== 1) break;
+      await talk(c.name, 'Hmm. A big loud voice might make a shy friend feel even more scared. What else could we try?');
+    }
+    await talk(c.name, h === 0 ? 'Good idea. Hi there... we\'re friendly. You don\'t have to be scared.' : 'Good idea. Let\'s sit quietly and wait for them.');
+    st.glimmer = 'out'; save.ch2.glimmer = true; persist(); chime([659, 784, 988, 1318]);
+    V.sparkle(st, CAVES.GLIM_X, 80, ['#bfe9ff', '#ffffff', '#ffd1ef'], 22);
+    await talk('Glimmer', 'Hi... I\'m Glimmer. I\'ve never had visitors before, so I was a little bit scared.');
+    await talk('Glimmer', 'But you were so gentle. Thank you for being kind to me!');
+    await talk(c.name, 'You\'re welcome, Glimmer. Sometimes I feel shy too, when things are new.');
+    await talk('Glimmer', 'Are you here for the Heart Crystal? Old stories say it glows for a companion and a friend who are brave and kind.');
+    await talk('Glimmer', 'And I think that\'s you two!');
+    endTalk(); refreshGoal(); showGuide();
+  }
+
+  async function runEvolution() {
+    const c = compInfo(), base = CREATURES.find(x => x.id === save.companion), evo = EVOLVE.EVO[save.companion], p = POWERS[save.companion];
+    if (save.ch2.bridge < 5) { await talk(c.name, 'That must be the Heart Crystal! But we need to cross the dark gap first.'); endTalk(); showGuide(); return; }
+    if (save.evolved) { await talk(c.name, 'The Heart Crystal is glowing softly. This is where I got my wings!'); endTalk(); return; }
+    if (!save.ch2.glimmer) { await talk(c.name, 'The Heart Crystal is dark... and I can hear someone sniffling nearby. Maybe somebody needs our help first?'); endTalk(); showGuide(); return; }
+    st.comp.face = 1; st.comp.tx = st.comp.x; st.arrive = null; st.evoAnim = true; st.guide = null;
+    await talk(c.name, 'The Heart Crystal is starting to glow... It feels warm, like it knows me.');
+    endTalk(); await anim(1200, k => { st.heartGlow = 0.25 + k * 0.4; });
+    await talk(c.name, 'Grandma said companions can grow into a new form here. But... I\'m a little bit nervous.');
+    await talk(c.name, 'What if I change? What if I\'m not me any more?');
+    const f = await ask(c.name, 'How do you think ' + c.name + ' is feeling?', ['😟 Nervous', '😴 Sleepy', '😂 Silly'], undefined, true);
+    logEmo('evolve-feels', ['nervous', 'sleepy', 'silly'][f], f === 0);
+    await talk(c.name, f === 0 ? 'Yes. Big changes can make us feel nervous, even good changes.' : 'Hmm, I think I feel nervous. Big changes can make us feel that way, even good ones.');
+    let h = -1;
+    for (let tries = 0; tries < 3; tries++) {
+      h = await ask(c.name, 'What could you say to help me feel brave?', ['💪 "You can do it! I\'ll be right here."', '🙈 "Don\'t be silly."', '💖 "You\'ll always be my best friend."'], undefined, true);
+      logEmo('evolve-help', ['encourage', 'dismiss', 'friend'][h], h !== 1);
+      if (h !== 1) break;
+      await talk(c.name, 'Hmm. When someone feels nervous, "don\'t be silly" can make them feel worse. What could you say instead?');
+    }
+    await talk(c.name, h === 0 ? 'You\'ll be right here with me? Then I can do it!' : 'Best friends forever? Then I\'m not scared any more!');
+    await talk('Pip', 'We\'re all here with you!');
+    await talk('Glimmer', 'Look! The Heart Crystal is glowing brighter than ever!');
+    endTalk();
+    // the evolution itself: flicker between the two forms, faster and faster, then a burst of light
+    st.scene = true; st.evoFlash = 1;
+    await anim(900, k => { st.heartGlow = 0.65 + k * 0.35; });
+    const steps = 22;
+    for (let i = 0; i < steps; i++) {
+      st.comp.sil = true; st.comp.evo = i % 2 ? evo : null;
+      chime([392 + i * 40], 'triangle');
+      if (i % 3 === 0) V.sparkle(st, st.comp.x, V.FEET - 30, p.cols, 10);
+      await wait(Math.max(45, 300 - i * 13));
+    }
+    st.comp.sil = false; st.comp.evo = evo; save.evolved = true;
+    save.powers = save.powers.map((_, i) => p.evoNames[i]); persist();
+    chime([523, 659, 784, 1046, 1318, 1568, 2093]);
+    for (let k = 0; k < 6; k++) setTimeout(() => V.sparkle(st, st.comp.x + (Math.random() - 0.5) * 40, V.FEET - 40 - Math.random() * 20, p.cols.concat(['#ffffff', '#ffd1ef']), 26), k * 120);
+    await wait(1200); st.evoFlash = 0; st.evoAnim = false; st.scene = false; drawHud();
+    await showCard('✨', base.name + ' evolved into ' + evo.name + '!', 'Bigger, stronger, and with brand new wings!', 'Wow!');
+    await talk(evo.name, 'I did it! I\'m ' + evo.name + ' now! And I still feel just like me.');
+    await talk(evo.name, 'My powers grew stronger too! Now I have ' + p.evoNames.slice(0, save.powers.length - 1).join(', ') + ' and ' + p.evoNames[save.powers.length - 1] + '!');
+    await talk(evo.name, 'And look... I can fly!');
+    endTalk();
+    st.scene = true; await anim(2200, k => { st.comp.lift = -Math.round(Math.sin(k * Math.PI) * 18 + Math.sin(k * Math.PI * 6) * 2); }); st.comp.lift = 0; st.scene = false;
+    await award('evolve');
+    await talk('Glimmer', 'That was the most amazing thing I\'ve ever seen!');
+    await talk('Pip', 'With wings, we can fly to places nobody has ever been. I wonder where we\'ll go next?');
+    endTalk(); refreshGoal();
+  }
+
+  Object.assign(SCRIPTS, {
+    async caveexit() { const a = await ask('Pip', 'Shall we go back out to Owl Village?', ['Yes', 'Not yet']); endTalk(); if (a === 0) await travel('owl'); },
+    async wordcrystals() {
+      if (save.ch2.wordLit >= 3) { await talk(compInfo().name, 'The word crystals are glowing so brightly. We read them all!'); endTalk(); return; }
+      await runCrystals();
+    },
+    async bridge() { await runBridge(); },
+    async glimmer() { await runGlimmer(); },
+    async heart() { await runEvolution(); },
+  });
+
+  if (location.hash === '#debug') window.__ch2 = { runPage, runSchool, runScience, runBedtime, travel, runCrystals: () => runCrystals(), runBridge: () => runBridge(), runEvolution: () => runEvolution() };
 
 
   if (location.hash === '#debug') window.__st = st;
